@@ -42,11 +42,14 @@ extension AppModel {
     func loadInitialPostsFromDatabase() {
         Task { [self] in
             do {
+                await MainActor.run {
+                    importState.isLoading = true
+                    importState.loadError = nil
+                }
                 try await sqliteManager.connect()
                 let total = try await sqliteManager.getPostCount()
                 if total > 0 {
                     await MainActor.run {
-                        importState.isLoading = true
                         importState.databaseImportStatus = "Loading saved bookmarks..."
                     }
                     let pageSize = 100
@@ -82,6 +85,12 @@ extension AppModel {
                                 }
                             }
                         }
+                    }
+                } else {
+                    await MainActor.run {
+                        importState.posts = []
+                        importState.isLoading = false
+                        importState.allPostsLoaded = true
                     }
                 }
                 await refreshPendingEnrichmentWork()

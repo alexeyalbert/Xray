@@ -137,6 +137,7 @@ actor SQLiteManager {
     }
 
     private var db: Connection!
+    private var isDatabaseReady = false
     private let dbFileName: String = "xray.sqlite3"
     private var browserImportGenerations: [String: Int64] = [:]
     private let browserImportOrderStride = 1_000_000
@@ -303,35 +304,30 @@ actor SQLiteManager {
         let groups: [[String]]
     }
     
-    init() {
-        Task { [weak self] in
-            guard let self else { return }
-            try? await self.connect()
-            await self.ensureDatabaseReady()
-        }
-    }
-    
     // MARK: - Setup
 
     func connect() async throws {
-        if db != nil { return }
-        let fm = FileManager.default
-        let appSupport = try fm.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-        let dir = appSupport.appendingPathComponent("Xray", isDirectory: true)
-        try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
-        let path = dir.appendingPathComponent(dbFileName).path
-        db = try Connection(path)
-        try db.execute("PRAGMA journal_mode=WAL;")
-        try db.execute("PRAGMA synchronous=NORMAL;")
-        print("[VectorSearch] Using CPU-based vector search for optimal accuracy")
+        if db == nil {
+            let fm = FileManager.default
+            let appSupport = try fm.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+            let dir = appSupport.appendingPathComponent("Xray", isDirectory: true)
+            try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+            let path = dir.appendingPathComponent(dbFileName).path
+            db = try Connection(path)
+            isDatabaseReady = false
+            try db.execute("PRAGMA journal_mode=WAL;")
+            try db.execute("PRAGMA synchronous=NORMAL;")
+            print("[VectorSearch] Using CPU-based vector search for optimal accuracy")
+        }
+
+        guard !isDatabaseReady else { return }
+        try ensureDatabaseReady()
+        isDatabaseReady = true
     }
 
-    private func ensureDatabaseReady() async {
-        do {
-            try await connect()
-
-            // Core table
-            let createPostsSQL = """
+    private func ensureDatabaseReady() throws {
+        // Core table
+        let createPostsSQL = """
             CREATE TABLE IF NOT EXISTS Posts (
                 id INTEGER PRIMARY KEY,
                 created_at REAL NOT NULL,
@@ -355,25 +351,25 @@ actor SQLiteManager {
                 bookmark_order INTEGER
             );
             """
-            try db.execute(createPostsSQL)
-            try db.execute("""
+        try db.execute(createPostsSQL)
+        try db.execute("""
             CREATE TABLE IF NOT EXISTS AppMetadata (
                 key TEXT PRIMARY KEY,
                 value TEXT NOT NULL
             );
             """)
-            try migrateEmbeddingColumns()
-            try prepareImageEmbeddingStorage()
-            try migrateBookmarkOrderColumns()
-            try? db.execute("ALTER TABLE Posts ADD COLUMN quoted_post TEXT;")
-            try? db.execute("ALTER TABLE Posts ADD COLUMN article TEXT;")
-            try? db.execute("ALTER TABLE Posts ADD COLUMN links TEXT;")
-            try? db.execute("ALTER TABLE Posts ADD COLUMN profile_image_shape TEXT NOT NULL DEFAULT 'Circle';")
-            try db.execute("CREATE INDEX IF NOT EXISTS posts_created_at_id_desc_idx ON Posts (created_at DESC, id DESC);")
-            try db.execute("CREATE INDEX IF NOT EXISTS posts_bookmark_order_idx ON Posts (bookmark_import_generation DESC, bookmark_order ASC, created_at DESC, id DESC);")
+        try migrateEmbeddingColumns()
+        try prepareImageEmbeddingStorage()
+        try migrateBookmarkOrderColumns()
+        try? db.execute("ALTER TABLE Posts ADD COLUMN quoted_post TEXT;")
+        try? db.execute("ALTER TABLE Posts ADD COLUMN article TEXT;")
+        try? db.execute("ALTER TABLE Posts ADD COLUMN links TEXT;")
+        try? db.execute("ALTER TABLE Posts ADD COLUMN profile_image_shape TEXT NOT NULL DEFAULT 'Circle';")
+        try db.execute("CREATE INDEX IF NOT EXISTS posts_created_at_id_desc_idx ON Posts (created_at DESC, id DESC);")
+        try db.execute("CREATE INDEX IF NOT EXISTS posts_bookmark_order_idx ON Posts (bookmark_import_generation DESC, bookmark_order ASC, created_at DESC, id DESC);")
 
-            // Maintain secondary_topics_text from JSON array in secondary_topics
-            let trigInsert = """
+        // Maintain secondary_topics_text from JSON array in secondary_topics
+        let trigInsert = """
             CREATE TRIGGER IF NOT EXISTS posts_topics_text_ai
             AFTER INSERT ON Posts
             BEGIN
@@ -391,7 +387,7 @@ actor SQLiteManager {
                 WHERE id = new.id;
             END;
             """
-            let trigUpdate = """
+        let trigUpdate = """
             CREATE TRIGGER IF NOT EXISTS posts_topics_text_au
             AFTER UPDATE OF secondary_topics ON Posts
             BEGIN
@@ -409,11 +405,11 @@ actor SQLiteManager {
                 WHERE id = new.id;
             END;
             """
-            try db.execute(trigInsert)
-            try db.execute(trigUpdate)
+        try db.execute(trigInsert)
+        try db.execute(trigUpdate)
 
-            // FTS5 index for keyword/topic search
-            let createFTS = """
+        // FTS5 index for keyword/topic search
+        let createFTS = """
             CREATE VIRTUAL TABLE IF NOT EXISTS posts_fts USING fts5(
                 full_text,
                 primary_topic,
@@ -422,20 +418,20 @@ actor SQLiteManager {
                 content_rowid='id'
             );
             """
-            try db.execute(createFTS)
-            let ftsAI = """
+        try db.execute(createFTS)
+        let ftsAI = """
             CREATE TRIGGER IF NOT EXISTS posts_fts_ai AFTER INSERT ON Posts BEGIN
                 INSERT INTO posts_fts(rowid, full_text, primary_topic, secondary_topics_text)
                 VALUES (new.id, new.full_text, new.primary_topic, new.secondary_topics_text);
             END;
             """
-            let ftsAD = """
+        let ftsAD = """
             CREATE TRIGGER IF NOT EXISTS posts_fts_ad AFTER DELETE ON Posts BEGIN
                 INSERT INTO posts_fts(posts_fts, rowid, full_text, primary_topic, secondary_topics_text)
                 VALUES('delete', old.id, old.full_text, old.primary_topic, old.secondary_topics_text);
             END;
             """
-            let ftsAU = """
+        let ftsAU = """
             CREATE TRIGGER IF NOT EXISTS posts_fts_au AFTER UPDATE ON Posts BEGIN
                 INSERT INTO posts_fts(posts_fts, rowid, full_text, primary_topic, secondary_topics_text)
                 VALUES('delete', old.id, old.full_text, old.primary_topic, old.secondary_topics_text);
@@ -443,16 +439,13 @@ actor SQLiteManager {
                 VALUES (new.id, new.full_text, new.primary_topic, new.secondary_topics_text);
             END;
             """
-            try db.execute(ftsAI)
-            try db.execute(ftsAD)
-            try db.execute(ftsAU)
-            try migrateStoredHTMLEntitiesIfNeeded()
+        try db.execute(ftsAI)
+        try db.execute(ftsAD)
+        try db.execute(ftsAU)
+        try migrateStoredHTMLEntitiesIfNeeded()
 
-            // No virtual tables needed - using CPU-based vector search for maximum accuracy
-            print("[VectorSearch] CPU-based vector search ready")
-        } catch {
-            print("SQLite setup error: \(error)")
-        }
+        // No virtual tables needed - using CPU-based vector search for maximum accuracy
+        print("[VectorSearch] CPU-based vector search ready")
     }
 
     // MARK: - Utilities
@@ -796,6 +789,7 @@ actor SQLiteManager {
         invalidateTextEmbeddingIndex()
         // Drop current connection
         db = nil
+        isDatabaseReady = false
         let fm = FileManager.default
         let urls = try databaseFileURLs()
         for url in [urls.main, urls.wal, urls.shm] {
@@ -805,13 +799,11 @@ actor SQLiteManager {
         }
         // Reconnect and recreate schema
         try await connect()
-        await ensureDatabaseReady()
         invalidateTextEmbeddingIndex()
     }
 
     func rebuildDatabaseSchemaPreservingPosts(onProgress: ((Double, String) async -> Void)? = nil) async throws -> Int {
         try await connect()
-        await ensureDatabaseReady()
         await onProgress?(0.05, "Snapshotting current posts...")
         let snapshot = try fetchAllPostsForSchemaRebuild()
         await onProgress?(0.20, "Preparing database backup...")
@@ -838,11 +830,11 @@ actor SQLiteManager {
         do {
             await onProgress?(0.35, "Recreating database schema...")
             db = nil
+            isDatabaseReady = false
             invalidateTextEmbeddingIndex()
             removeDatabaseFiles()
 
             try await connect()
-            await ensureDatabaseReady()
 
             if !snapshot.isEmpty {
                 await onProgress?(0.45, "Restoring \(snapshot.count) posts...")
@@ -861,6 +853,7 @@ actor SQLiteManager {
             return snapshot.count
         } catch {
             db = nil
+            isDatabaseReady = false
             invalidateTextEmbeddingIndex()
             removeDatabaseFiles()
 
@@ -869,7 +862,6 @@ actor SQLiteManager {
             }
             try? fm.removeItem(at: backupDir)
             try? await connect()
-            await ensureDatabaseReady()
             throw error
         }
     }
