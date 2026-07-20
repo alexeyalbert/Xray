@@ -19,7 +19,7 @@ Xray is not affiliated with X Corp.
 - Preserves text, authors, quoted posts, articles, links, images, and video previews.
 - Searches exact text, fields, topics, and grouped boolean expressions.
 - Generates text and image embeddings on-device with MLX and Qwen3 models.
-- Optionally generates primary and secondary topics through OpenAI or OpenRouter.
+- Optionally generates primary and secondary topics through OpenRouter.
 - Keeps the bookmark library and generated embeddings in a local SQLite database.
 
 ## Requirements
@@ -29,7 +29,7 @@ Xray is not affiliated with X Corp.
 - Xcode with the macOS 15.6 SDK or later
 - A userscript manager such as [Violentmonkey](https://violentmonkey.github.io/)
   for direct browser capture
-- An OpenAI or OpenRouter API key only if you want automatic topic generation
+- An OpenRouter API key only if you want automatic topic generation
 
 ## Build and run
 
@@ -57,15 +57,13 @@ You can replay the setup later from **Xray > Replay Onboarding**.
 ### Stream from the browser
 
 1. Install a userscript manager. Violentmonkey is the recommended option.
-2. Create a new userscript, replace its contents with
-   [`Xray Bookmarks Exporter Userscript/xray-bookmarks-exporter.user.js`](Xray%20Bookmarks%20Exporter%20Userscript/xray-bookmarks-exporter.user.js),
-   and save it.
+2. Install the
+   [Xray Bookmarks Exporter userscript](https://github.com/alexeyalbert/Xray/raw/refs/heads/main/Xray%20Bookmarks%20Exporter%20Userscript/xray-bookmarks-exporter.user.js).
 3. Open or reload `https://x.com/i/bookmarks` while signed in.
-4. In Xray, open **Settings > Debug** and enable the toolbar info button.
-5. Choose **Bookmarks > Start Browser Import Receiver**.
-6. Open the info button in Xray and copy its receiver URL and session token
-   into the userscript panel.
-7. Select **Connect to Xray**, then **Start capture**.
+4. Choose **Bookmarks > Start Browser Import Receiver**.
+5. Copy the receiver URL and session token from the popup into the userscript
+   panel.
+6. Select **Connect to Xray**, then **Start capture**.
 
 The receiver listens on localhost and accepts batches only when they include
 the current session token. The script can pause, resume, retry interrupted
@@ -106,9 +104,8 @@ Zero Data Retention routing.
 - Images and video previews are fetched from the source URLs recorded in the
   imported bookmark data when Xray needs to display or process them.
 - Topic generation is optional. If enabled, post text and selected public
-  media are sent directly to OpenAI or OpenRouter. OpenRouter requests include
-  a Zero Data Retention routing preference, but the provider's own terms and
-  policies still apply.
+  media are sent directly to OpenRouter. Requests include a Zero Data Retention
+  routing preference, but the provider's own terms and policies still apply.
 - API keys and the browser-import session token are stored in the macOS
   Keychain. Ordinary preferences are stored in `UserDefaults`.
 - Browser streaming is local to your Mac and token-protected. JSON export mode
