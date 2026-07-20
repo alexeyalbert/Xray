@@ -20,10 +20,11 @@ private enum OnboardingStage: Int, CaseIterable {
     case userscriptManager
     case userscriptInstall
     case openRouter
-    case ready
+    case complete
 }
 
 struct OnboardingView: View {
+    let onStartBrowserImport: () -> Void
     let onComplete: () -> Void
 
     @State private var stage: OnboardingStage = .intro
@@ -64,8 +65,12 @@ struct OnboardingView: View {
                             onContinue: advance,
                             onSkipAll: complete
                         )
-                    case .ready:
-                        ReadyStep(onBack: goBack, onComplete: complete)
+                    case .complete:
+                        ConfigurationCompleteStep(
+                            onBack: goBack,
+                            onStartBrowserImport: startBrowserImportAndComplete,
+                            onContinueWithoutStarting: complete
+                        )
                     }
                 }
                 .frame(maxHeight: .infinity)
@@ -96,6 +101,11 @@ struct OnboardingView: View {
     private func complete() {
         OnboardingSettings.hasCompleted = true
         onComplete()
+    }
+
+    private func startBrowserImportAndComplete() {
+        onStartBrowserImport()
+        complete()
     }
 }
 
@@ -370,12 +380,12 @@ private struct UserscriptManagerStep: View {
 
     var body: some View {
         OnboardingStepLayout(
-            title: "Choose a userscript manager",
-            description: "Xray uses a userscript to capture your X bookmarks and sends them directly to the app's local import receiver via a local HTTP server. The userscript also has an option to export a JSON archive instead.",
+            title: "Choose a Userscript Manager",
+            description: "A userscript manager lets Xray's browser helper run on your X bookmarks page. Choose one for your browser, install it, then return here.",
             onBack: onBack,
             onContinue: onContinue,
             onSkipAll: onSkipAll,
-            continueTitle: "I Have a Manager"
+            continueTitle: "I Have a Userscript Manager"
         ) {
             HStack(alignment: .top, spacing: 16) {
                 ForEach(managers) { manager in
@@ -465,35 +475,150 @@ private struct UserscriptInstallStep: View {
     let onContinue: () -> Void
     let onSkipAll: () -> Void
 
+    private static let userscriptURL = URL(
+        string: "https://github.com/alexeyalbert/Xray/raw/refs/heads/main/Xray%20Bookmarks%20Exporter%20Userscript/xray-bookmarks-exporter.user.js"
+    )!
+
     var body: some View {
         OnboardingStepLayout(
-            title: "Install the Xray userscript",
-            description: "Once the script is published, Xray will open its installation page in your default browser here.",
+            title: "Install the Xray Userscript",
+            description: "Add Xray Bookmarks Exporter to your userscript manager. It runs only on your X bookmarks page and can import directly into Xray or export your bookmarks as JSON.",
             onBack: onBack,
             onContinue: onContinue,
             onSkipAll: onSkipAll,
-            continueTitle: "Continue"
+            continueTitle: "I've Installed It"
         ) {
-            VStack(spacing: 18) {
-                Image(systemName: "safari.fill")
-                    .font(.system(size: 64))
-                    .foregroundStyle(.blue)
+            VStack(spacing: 16) {
+                UserscriptInstallCard(url: Self.userscriptURL)
 
-                Text("Userscript link coming soon")
-                    .font(.title2.weight(.semibold))
-
-                Text("The checked-in userscript is not hosted at a stable public URL yet. This button is intentionally a placeholder until the script is published.")
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 520)
-
-                Button("Open Userscript in Default Browser") {}
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    .disabled(true)
+                HStack(alignment: .top, spacing: 12) {
+                    UserscriptInstallInstruction(
+                        number: 1,
+                        title: "Install",
+                        detail: "Open the installer and approve the script in your userscript manager."
+                    )
+                    UserscriptInstallInstruction(
+                        number: 2,
+                        title: "Open Bookmarks",
+                        detail: "Visit x.com/i/bookmarks and the Xray panel will appear on the page."
+                    )
+                    UserscriptInstallInstruction(
+                        number: 3,
+                        title: "Connect to Xray",
+                        detail: "Start Xray's Browser Import Receiver, then enter the URL and token it shows."
+                    )
+                }
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 28)
+        }
+    }
+}
+
+private struct UserscriptInstallCard: View {
+    let url: URL
+
+    var body: some View {
+        HStack(spacing: 18) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.accentColor.opacity(0.12))
+
+                Image(systemName: "doc.badge.gearshape")
+                    .font(.system(size: 32, weight: .medium))
+                    .foregroundStyle(Color.accentColor)
+            }
+            .frame(width: 74, height: 74)
+            .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 7) {
+                Text("Xray Bookmarks Exporter")
+                    .font(.title2.weight(.semibold))
+
+                Text("Official browser companion for Xray")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 8) {
+                    UserscriptInstallBadge(title: "Open source", systemImage: "checkmark.seal.fill")
+                    UserscriptInstallBadge(title: "Runs on x.com", systemImage: "lock.shield.fill")
+                }
+            }
+
+            Spacer(minLength: 16)
+
+            Link(destination: url) {
+                HStack(spacing: 8) {
+                    Text("Install Userscript")
+                    Image(systemName: "arrow.up.right")
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .pointingHandOnHover()
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(nsColor: .controlBackgroundColor))
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+        }
+    }
+}
+
+private struct UserscriptInstallBadge: View {
+    let title: LocalizedStringResource
+    let systemImage: String
+
+    var body: some View {
+        Label(title, systemImage: systemImage)
+            .font(.caption.weight(.medium))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 5)
+            .background(
+                Capsule()
+                    .fill(Color.primary.opacity(0.06))
+            )
+    }
+}
+
+private struct UserscriptInstallInstruction: View {
+    let number: Int
+    let title: LocalizedStringResource
+    let detail: LocalizedStringResource
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Text(number, format: .number)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(Color.accentColor)
+                .frame(width: 24, height: 24)
+                .background(
+                    Circle()
+                        .fill(Color.accentColor.opacity(0.12))
+                )
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(nsColor: .controlBackgroundColor))
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
         }
     }
 }
@@ -570,23 +695,60 @@ private struct OpenRouterSetupStep: View {
     }
 }
 
-private struct ReadyStep: View {
+private struct ConfigurationCompleteStep: View {
     let onBack: () -> Void
-    let onComplete: () -> Void
+    let onStartBrowserImport: () -> Void
+    let onContinueWithoutStarting: () -> Void
 
     var body: some View {
-        VStack(spacing: 22) {
+        VStack(spacing: 28) {
+            ConfigurationCompleteHeader()
+
+            ConfigurationCompleteActions(
+                onBack: onBack,
+                onStartBrowserImport: onStartBrowserImport,
+                onContinueWithoutStarting: onContinueWithoutStarting
+            )
+        }
+        .padding(40)
+    }
+}
+
+private struct ConfigurationCompleteHeader: View {
+    var body: some View {
+        VStack(spacing: 18) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 76))
                 .foregroundStyle(.green)
 
-            Text("Xray is ready")
+            Text("Configuration Complete")
                 .font(.largeTitle.weight(.bold))
 
-            Text("You can revisit this setup at any time from Xray → Replay Onboarding.")
+            Text("Start the Browser Import Receiver now to connect the userscript, or leave it off and enable it later from the Bookmarks menu.")
                 .font(.title3)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: 620)
+        }
+    }
+}
+
+private struct ConfigurationCompleteActions: View {
+    let onBack: () -> Void
+    let onStartBrowserImport: () -> Void
+    let onContinueWithoutStarting: () -> Void
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Button(action: onStartBrowserImport) {
+                Label("Start Browser Import Receiver", systemImage: "dot.radiowaves.left.and.right")
+                    .frame(minWidth: 250)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .keyboardShortcut(.defaultAction)
+            .pointingHandOnHover()
 
             HStack(spacing: 12) {
                 Button("Back", action: onBack)
@@ -594,14 +756,12 @@ private struct ReadyStep: View {
                     .controlSize(.large)
                     .pointingHandOnHover()
 
-                Button("Start Using Xray", action: onComplete)
-                    .buttonStyle(.borderedProminent)
+                Button("Continue Without Starting", action: onContinueWithoutStarting)
+                    .buttonStyle(.bordered)
                     .controlSize(.large)
-                    .keyboardShortcut(.defaultAction)
                     .pointingHandOnHover()
             }
         }
-        .padding(40)
     }
 }
 
@@ -684,6 +844,6 @@ private struct OnboardingStepLayout<Content: View>: View {
 }
 
 #Preview {
-    OnboardingView(onComplete: {})
+    OnboardingView(onStartBrowserImport: {}, onComplete: {})
         .frame(width: 1000, height: 700)
 }

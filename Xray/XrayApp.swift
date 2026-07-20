@@ -9,9 +9,12 @@ struct XrayApp: App {
     var body: some Scene {
         WindowGroup {
             if isShowingOnboarding {
-                OnboardingView {
-                    isShowingOnboarding = false
-                }
+                OnboardingView(
+                    onStartBrowserImport: model.beginBrowserImportReceiver,
+                    onComplete: {
+                        isShowingOnboarding = false
+                    }
+                )
                 .containerBackground(.regularMaterial, for: .window)
             } else {
                 ContentView(
