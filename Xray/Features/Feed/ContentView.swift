@@ -799,8 +799,11 @@ private struct BrowserImportConnectionInfoOverlay: View {
 
     var body: some View {
         ZStack {
-            Color.black
-                .opacity(0.28)
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .overlay {
+                    Color.black.opacity(0.16)
+                }
                 .ignoresSafeArea()
                 .accessibilityHidden(true)
 
@@ -820,12 +823,7 @@ private struct BrowserImportConnectionInfoOverlay: View {
                     )
                 }
 
-                Button("OK", action: onDismiss)
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.regular)
-                    .keyboardShortcut(.defaultAction)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .pointingHandOnHover()
+                BrowserImportConnectionActions(onDismiss: onDismiss)
             }
             .padding(18)
             .frame(maxWidth: 460)
@@ -839,6 +837,32 @@ private struct BrowserImportConnectionInfoOverlay: View {
             }
             .shadow(color: .black.opacity(0.22), radius: 24, y: 10)
             .padding(18)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+private struct BrowserImportConnectionActions: View {
+    private static let bookmarksURL = URL(string: "https://x.com/i/bookmarks")!
+
+    let onDismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Link(destination: Self.bookmarksURL) {
+                Label("Open X Bookmarks", systemImage: "arrow.up.right.square")
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.regular)
+            .pointingHandOnHover()
+
+            Spacer(minLength: 0)
+
+            Button("OK", action: onDismiss)
+                .buttonStyle(.borderedProminent)
+                .controlSize(.regular)
+                .keyboardShortcut(.defaultAction)
+                .pointingHandOnHover()
         }
     }
 }
