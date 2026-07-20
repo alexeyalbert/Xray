@@ -1,0 +1,753 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		9E10AF942E559DA3000C8CB3 /* DeterministicColorGen in Frameworks */ = {isa = PBXBuildFile; productRef = 9E10AF932E559DA3000C8CB3 /* DeterministicColorGen */; };
+		9E2468892FE37CD900E4F869 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 9E2468882FE37CD900E4F869 /* Kingfisher */; };
+		9E4682432E4786F6007AF539 /* OpenAI in Frameworks */ = {isa = PBXBuildFile; productRef = 9E4682422E4786F6007AF539 /* OpenAI */; };
+		9E8C404B2E40F87F0090E74B /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = 9E8C404A2E40F87F0090E74B /* MLX */; };
+		9E8C404E2E40F89D0090E74B /* MLXEmbeddings in Frameworks */ = {isa = PBXBuildFile; productRef = 9E8C404D2E40F89D0090E74B /* MLXEmbeddings */; };
+		9EA1CF5E2E45C1950093B787 /* Chroma in Frameworks */ = {isa = PBXBuildFile; productRef = 9EA1CF5D2E45C1950093B787 /* Chroma */; };
+		9EA1CF642E460B900093B787 /* MLXFFT in Frameworks */ = {isa = PBXBuildFile; productRef = 9EA1CF632E460B900093B787 /* MLXFFT */; };
+		9EA1CF662E460B900093B787 /* MLXFast in Frameworks */ = {isa = PBXBuildFile; productRef = 9EA1CF652E460B900093B787 /* MLXFast */; };
+		9EA1CF682E460B900093B787 /* MLXLinalg in Frameworks */ = {isa = PBXBuildFile; productRef = 9EA1CF672E460B900093B787 /* MLXLinalg */; };
+		9EA1CF6A2E460B900093B787 /* MLXNN in Frameworks */ = {isa = PBXBuildFile; productRef = 9EA1CF692E460B900093B787 /* MLXNN */; };
+		9ED690A52E5179200037212B /* SQLite in Frameworks */ = {isa = PBXBuildFile; productRef = 9ED690A42E5179200037212B /* SQLite */; };
+		9ED690A82E51799C0037212B /* CSQLiteVec in Frameworks */ = {isa = PBXBuildFile; productRef = 9ED690A72E51799C0037212B /* CSQLiteVec */; };
+		9ED690AA2E51799C0037212B /* SQLiteVec in Frameworks */ = {isa = PBXBuildFile; productRef = 9ED690A92E51799C0037212B /* SQLiteVec */; };
+		9ED690AE2E5188800037212B /* Xray.icon in Resources */ = {isa = PBXBuildFile; fileRef = 9ED690AD2E5188800037212B /* Xray.icon */; };
+		9ED690D32E5252E80037212B /* SQLiteVecCLI in Frameworks */ = {isa = PBXBuildFile; productRef = 9ED690D22E5252E80037212B /* SQLiteVecCLI */; };
+		9ED6915A2E5401780037212B /* DeterministicColorGen in Frameworks */ = {isa = PBXBuildFile; productRef = 9ED691592E5401780037212B /* DeterministicColorGen */; };
+		9EF0396C3006B7F6001FBE87 /* HuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = 9EF039693006B7F6001FBE87 /* HuggingFace */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A10000000000000000000007 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9EE6EA332E40F7D70086300F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9EE6EA3A2E40F7D70086300F;
+			remoteInfo = Xray;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		9ED690AD2E5188800037212B /* Xray.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = Xray.icon; sourceTree = "<group>"; };
+		9EE6EA3B2E40F7D70086300F /* Xray.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Xray.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000001 /* XrayTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = XrayTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		9EE6EA3D2E40F7D70086300F /* Xray */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Xray;
+			sourceTree = "<group>";
+		};
+		A10000000000000000000002 /* XrayTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = XrayTests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		9EE6EA382E40F7D70086300F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9E4682432E4786F6007AF539 /* OpenAI in Frameworks */,
+				9EA1CF5E2E45C1950093B787 /* Chroma in Frameworks */,
+				9E10AF942E559DA3000C8CB3 /* DeterministicColorGen in Frameworks */,
+				9ED6915A2E5401780037212B /* DeterministicColorGen in Frameworks */,
+				9E8C404E2E40F89D0090E74B /* MLXEmbeddings in Frameworks */,
+				9EA1CF642E460B900093B787 /* MLXFFT in Frameworks */,
+				9EA1CF6A2E460B900093B787 /* MLXNN in Frameworks */,
+				9ED690D32E5252E80037212B /* SQLiteVecCLI in Frameworks */,
+				9ED690AA2E51799C0037212B /* SQLiteVec in Frameworks */,
+				9E8C404B2E40F87F0090E74B /* MLX in Frameworks */,
+				9ED690A82E51799C0037212B /* CSQLiteVec in Frameworks */,
+				9EF0396C3006B7F6001FBE87 /* HuggingFace in Frameworks */,
+				9EA1CF662E460B900093B787 /* MLXFast in Frameworks */,
+				9EA1CF682E460B900093B787 /* MLXLinalg in Frameworks */,
+				9E2468892FE37CD900E4F869 /* Kingfisher in Frameworks */,
+				9ED690A52E5179200037212B /* SQLite in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10000000000000000000003 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		9EE6EA322E40F7D70086300F = {
+			isa = PBXGroup;
+			children = (
+				9EE6EA3D2E40F7D70086300F /* Xray */,
+				A10000000000000000000002 /* XrayTests */,
+				9EE6EA3C2E40F7D70086300F /* Products */,
+				9ED690AD2E5188800037212B /* Xray.icon */,
+			);
+			sourceTree = "<group>";
+		};
+		9EE6EA3C2E40F7D70086300F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9EE6EA3B2E40F7D70086300F /* Xray.app */,
+				A10000000000000000000001 /* XrayTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		9EE6EA3A2E40F7D70086300F /* Xray */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9EE6EA462E40F7D90086300F /* Build configuration list for PBXNativeTarget "Xray" */;
+			buildPhases = (
+				9EE6EA372E40F7D70086300F /* Sources */,
+				9EE6EA382E40F7D70086300F /* Frameworks */,
+				9EE6EA392E40F7D70086300F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				9EE6EA3D2E40F7D70086300F /* Xray */,
+			);
+			name = Xray;
+			packageProductDependencies = (
+				9E8C404A2E40F87F0090E74B /* MLX */,
+				9E8C404D2E40F89D0090E74B /* MLXEmbeddings */,
+				9EA1CF5D2E45C1950093B787 /* Chroma */,
+				9EA1CF632E460B900093B787 /* MLXFFT */,
+				9EA1CF652E460B900093B787 /* MLXFast */,
+				9EA1CF672E460B900093B787 /* MLXLinalg */,
+				9EA1CF692E460B900093B787 /* MLXNN */,
+				9E4682422E4786F6007AF539 /* OpenAI */,
+				9ED690A42E5179200037212B /* SQLite */,
+				9ED690A72E51799C0037212B /* CSQLiteVec */,
+				9ED690A92E51799C0037212B /* SQLiteVec */,
+				9ED690D22E5252E80037212B /* SQLiteVecCLI */,
+				9ED691592E5401780037212B /* DeterministicColorGen */,
+				9E10AF932E559DA3000C8CB3 /* DeterministicColorGen */,
+				9EF039693006B7F6001FBE87 /* HuggingFace */,
+				9E2468882FE37CD900E4F869 /* Kingfisher */,
+			);
+			productName = Xray;
+			productReference = 9EE6EA3B2E40F7D70086300F /* Xray.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A10000000000000000000006 /* XrayTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1000000000000000000000B /* Build configuration list for PBXNativeTarget "XrayTests" */;
+			buildPhases = (
+				A10000000000000000000005 /* Sources */,
+				A10000000000000000000003 /* Frameworks */,
+				A10000000000000000000004 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A10000000000000000000008 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A10000000000000000000002 /* XrayTests */,
+			);
+			name = XrayTests;
+			packageProductDependencies = (
+			);
+			productName = XrayTests;
+			productReference = A10000000000000000000001 /* XrayTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		9EE6EA332E40F7D70086300F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2640;
+				TargetAttributes = {
+					9EE6EA3A2E40F7D70086300F = {
+						CreatedOnToolsVersion = 26.0;
+					};
+					A10000000000000000000006 = {
+						CreatedOnToolsVersion = 26.0;
+						TestTargetID = 9EE6EA3A2E40F7D70086300F;
+					};
+				};
+			};
+			buildConfigurationList = 9EE6EA362E40F7D70086300F /* Build configuration list for PBXProject "Xray" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 9EE6EA322E40F7D70086300F;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				9E8C40492E40F87F0090E74B /* XCRemoteSwiftPackageReference "mlx-swift" */,
+				9E8C404C2E40F89D0090E74B /* XCLocalSwiftPackageReference "../mlx-embeddings-swift" */,
+				9EA1CF5C2E45C1950093B787 /* XCRemoteSwiftPackageReference "Chroma-Swift" */,
+				9E4682412E4786F6007AF539 /* XCRemoteSwiftPackageReference "OpenAI" */,
+				9ED690A32E5179200037212B /* XCRemoteSwiftPackageReference "SQLite.swift" */,
+				9ED690A62E51799C0037212B /* XCRemoteSwiftPackageReference "SQLiteVec" */,
+				9E10AF922E559DA3000C8CB3 /* XCRemoteSwiftPackageReference "DeterministicColorGen" */,
+				9E2468872FE37CD900E4F869 /* XCRemoteSwiftPackageReference "Kingfisher" */,
+				9EF039663006B7F6001FBE87 /* XCRemoteSwiftPackageReference "swift-huggingface" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 9EE6EA3C2E40F7D70086300F /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				9EE6EA3A2E40F7D70086300F /* Xray */,
+				A10000000000000000000006 /* XrayTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		9EE6EA392E40F7D70086300F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9ED690AE2E5188800037212B /* Xray.icon in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10000000000000000000004 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		9EE6EA372E40F7D70086300F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A10000000000000000000005 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A10000000000000000000008 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9EE6EA3A2E40F7D70086300F /* Xray */;
+			targetProxy = A10000000000000000000007 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		9EE6EA442E40F7D90086300F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = JBXG2AJTZG;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		9EE6EA452E40F7D90086300F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = JBXG2AJTZG;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		9EE6EA472E40F7D90086300F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = Xray;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = JBXG2AJTZG;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_FILE_ACCESS_DOWNLOADS_FOLDER = readonly;
+				ENABLE_FILE_ACCESS_MOVIES_FOLDER = readonly;
+				ENABLE_FILE_ACCESS_MUSIC_FOLDER = readonly;
+				ENABLE_FILE_ACCESS_PICTURE_FOLDER = readonly;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Xray;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 15.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.alexeyalbert.Xray;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				XROS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Debug;
+		};
+		9EE6EA482E40F7D90086300F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = Xray;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = JBXG2AJTZG;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Xray;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 15.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.alexeyalbert.Xray;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				XROS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Release;
+		};
+		A10000000000000000000009 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = JBXG2AJTZG;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.alexeyalbert.XrayTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Xray.app/Contents/MacOS/Xray";
+				TEST_TARGET_NAME = Xray;
+			};
+			name = Debug;
+		};
+		A1000000000000000000000A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = JBXG2AJTZG;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.alexeyalbert.XrayTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Xray.app/Contents/MacOS/Xray";
+				TEST_TARGET_NAME = Xray;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9EE6EA362E40F7D70086300F /* Build configuration list for PBXProject "Xray" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9EE6EA442E40F7D90086300F /* Debug */,
+				9EE6EA452E40F7D90086300F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9EE6EA462E40F7D90086300F /* Build configuration list for PBXNativeTarget "Xray" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9EE6EA472E40F7D90086300F /* Debug */,
+				9EE6EA482E40F7D90086300F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1000000000000000000000B /* Build configuration list for PBXNativeTarget "XrayTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A10000000000000000000009 /* Debug */,
+				A1000000000000000000000A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		9E8C404C2E40F89D0090E74B /* XCLocalSwiftPackageReference "../mlx-embeddings-swift" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../mlx-embeddings-swift";
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		9E10AF922E559DA3000C8CB3 /* XCRemoteSwiftPackageReference "DeterministicColorGen" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/alexeyalbert/DeterministicColorGen.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+		9E2468872FE37CD900E4F869 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.0.0;
+			};
+		};
+		9E4682412E4786F6007AF539 /* XCRemoteSwiftPackageReference "OpenAI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/MacPaw/OpenAI.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.4.5;
+			};
+		};
+		9E8C40492E40F87F0090E74B /* XCRemoteSwiftPackageReference "mlx-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ml-explore/mlx-swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.31.6;
+			};
+		};
+		9EA1CF5C2E45C1950093B787 /* XCRemoteSwiftPackageReference "Chroma-Swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SolarDesignSystem/Chroma-Swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.0;
+			};
+		};
+		9ED690A32E5179200037212B /* XCRemoteSwiftPackageReference "SQLite.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/stephencelis/SQLite.swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.15.4;
+			};
+		};
+		9ED690A62E51799C0037212B /* XCRemoteSwiftPackageReference "SQLiteVec" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/jkrukowski/SQLiteVec";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.0.13;
+			};
+		};
+		9EF039663006B7F6001FBE87 /* XCRemoteSwiftPackageReference "swift-huggingface" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/huggingface/swift-huggingface";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.0;
+			};
+			traits = (
+			);
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		9E10AF932E559DA3000C8CB3 /* DeterministicColorGen */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9E10AF922E559DA3000C8CB3 /* XCRemoteSwiftPackageReference "DeterministicColorGen" */;
+			productName = DeterministicColorGen;
+		};
+		9E2468882FE37CD900E4F869 /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9E2468872FE37CD900E4F869 /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			productName = Kingfisher;
+		};
+		9E4682422E4786F6007AF539 /* OpenAI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9E4682412E4786F6007AF539 /* XCRemoteSwiftPackageReference "OpenAI" */;
+			productName = OpenAI;
+		};
+		9E8C404A2E40F87F0090E74B /* MLX */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9E8C40492E40F87F0090E74B /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLX;
+		};
+		9E8C404D2E40F89D0090E74B /* MLXEmbeddings */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MLXEmbeddings;
+		};
+		9EA1CF5D2E45C1950093B787 /* Chroma */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9EA1CF5C2E45C1950093B787 /* XCRemoteSwiftPackageReference "Chroma-Swift" */;
+			productName = Chroma;
+		};
+		9EA1CF632E460B900093B787 /* MLXFFT */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9E8C40492E40F87F0090E74B /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXFFT;
+		};
+		9EA1CF652E460B900093B787 /* MLXFast */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9E8C40492E40F87F0090E74B /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXFast;
+		};
+		9EA1CF672E460B900093B787 /* MLXLinalg */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9E8C40492E40F87F0090E74B /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXLinalg;
+		};
+		9EA1CF692E460B900093B787 /* MLXNN */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9E8C40492E40F87F0090E74B /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXNN;
+		};
+		9ED690A42E5179200037212B /* SQLite */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9ED690A32E5179200037212B /* XCRemoteSwiftPackageReference "SQLite.swift" */;
+			productName = SQLite;
+		};
+		9ED690A72E51799C0037212B /* CSQLiteVec */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9ED690A62E51799C0037212B /* XCRemoteSwiftPackageReference "SQLiteVec" */;
+			productName = CSQLiteVec;
+		};
+		9ED690A92E51799C0037212B /* SQLiteVec */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9ED690A62E51799C0037212B /* XCRemoteSwiftPackageReference "SQLiteVec" */;
+			productName = SQLiteVec;
+		};
+		9ED690D22E5252E80037212B /* SQLiteVecCLI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9ED690A62E51799C0037212B /* XCRemoteSwiftPackageReference "SQLiteVec" */;
+			productName = SQLiteVecCLI;
+		};
+		9ED691592E5401780037212B /* DeterministicColorGen */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DeterministicColorGen;
+		};
+		9EF039693006B7F6001FBE87 /* HuggingFace */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9EF039663006B7F6001FBE87 /* XCRemoteSwiftPackageReference "swift-huggingface" */;
+			productName = HuggingFace;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 9EE6EA332E40F7D70086300F /* Project object */;
+}
