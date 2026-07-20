@@ -59,6 +59,7 @@ class ImportState {
     var browserImportReceiverError: String? = nil
     var browserImportReceiverURL: String = ""
     var browserImportReceiverToken: String = ""
+    var isBrowserImportConnectionInfoPresented: Bool = false
     var browserImportActiveSessionID: String? = nil
     var browserImportLastBatchAt: Date? = nil
     var browserImportBatchesReceived: Int = 0

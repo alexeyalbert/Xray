@@ -199,6 +199,18 @@ struct ContentView: View {
                 }
                 .animation(.easeInOut(duration: 0.3), value: isEnrichmentRunning)
             }
+            .overlay {
+                if importState.isBrowserImportConnectionInfoPresented {
+                    BrowserImportConnectionInfoOverlay(
+                        receiverURL: importState.browserImportReceiverURL,
+                        sessionToken: importState.browserImportReceiverToken,
+                        onDismiss: {
+                            importState.isBrowserImportConnectionInfoPresented = false
+                        }
+                    )
+                    .zIndex(20)
+                }
+            }
 #if !os(macOS)
             .searchable(text: $searchText, placement: .toolbarPrincipal, prompt: "Search, emb:, --emb:, --term, !NULL, id:, topic:, p_topic:, s_topic:, user:, &&, ||")
 #endif
@@ -780,6 +792,157 @@ struct ContentView: View {
     }
 }
 
+private struct BrowserImportConnectionInfoOverlay: View {
+    let receiverURL: String
+    let sessionToken: String
+    let onDismiss: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black
+                .opacity(0.28)
+                .ignoresSafeArea()
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 14) {
+                BrowserImportConnectionInfoHeader()
+
+                VStack(spacing: 8) {
+                    BrowserImportConnectionValueRow(
+                        title: "Receiver URL",
+                        value: receiverURL,
+                        systemImage: "network"
+                    )
+                    BrowserImportConnectionValueRow(
+                        title: "Session Token",
+                        value: sessionToken,
+                        systemImage: "key.fill"
+                    )
+                }
+
+                Button("OK", action: onDismiss)
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.regular)
+                    .keyboardShortcut(.defaultAction)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .pointingHandOnHover()
+            }
+            .padding(18)
+            .frame(maxWidth: 460)
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(Color(nsColor: .windowBackgroundColor))
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(Color.primary.opacity(0.1), lineWidth: 1)
+            }
+            .shadow(color: .black.opacity(0.22), radius: 24, y: 10)
+            .padding(18)
+        }
+    }
+}
+
+private struct BrowserImportConnectionInfoHeader: View {
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "dot.radiowaves.left.and.right")
+                .font(.title2)
+                .foregroundStyle(Color.accentColor)
+                .frame(width: 32)
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Browser Import Receiver Started")
+                    .font(.title2.weight(.semibold))
+
+                Text("Enter these values in the Xray Bookmarks Exporter panel, then connect to Xray.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+}
+
+private struct BrowserImportConnectionValueRow: View {
+    let title: LocalizedStringResource
+    let value: String
+    let systemImage: String
+
+    @State private var isCopied = false
+    @State private var copyFeedbackGeneration = 0
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 10) {
+            Image(systemName: systemImage)
+                .font(.body.weight(.medium))
+                .foregroundStyle(.secondary)
+                .frame(width: 20)
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
+                Text(value)
+                    .font(.body.monospaced())
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 0)
+
+            Button(action: copyValue) {
+                Image(systemName: isCopied ? "checkmark" : "doc.on.doc")
+                    .contentTransition(.symbolEffect(.replace))
+                    .frame(width: 24, height: 24)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.borderless)
+            .foregroundStyle(isCopied ? Color.green : Color.secondary)
+            .help(isCopied ? "Copied" : "Copy to Clipboard")
+            .accessibilityLabel("Copy to Clipboard")
+            .pointingHandOnHover()
+            .task(id: copyFeedbackGeneration) {
+                guard copyFeedbackGeneration > 0 else { return }
+
+                do {
+                    try await Task.sleep(for: .seconds(1.2))
+                } catch {
+                    return
+                }
+
+                withAnimation(.easeOut(duration: 0.18)) {
+                    isCopied = false
+                }
+            }
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color(nsColor: .controlBackgroundColor))
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+        }
+    }
+
+    private func copyValue() {
+#if os(macOS)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(value, forType: .string)
+#endif
+        copyFeedbackGeneration += 1
+        withAnimation(.snappy(duration: 0.2)) {
+            isCopied = true
+        }
+    }
+}
+
 #if os(macOS)
 @MainActor
 #endif
@@ -924,4 +1087,3 @@ private extension ContentView {
         return "`\(trimmed)`"
     }
 }
-

@@ -51,6 +51,7 @@ extension AppModel {
                 importState.browserImportReceiverStatus = "Starting browser import receiver..."
                 importState.browserImportReceiverURL = ""
                 importState.browserImportReceiverToken = token
+                importState.isBrowserImportConnectionInfoPresented = false
                 importState.browserImportActiveSessionID = nil
                 importState.browserImportLastBatchAt = nil
                 importState.browserImportBatchesReceived = 0
@@ -69,6 +70,7 @@ extension AppModel {
                     importState.browserImportReceiverStatus = "Receiver is listening for browser batches."
                     importState.browserImportReceiverURL = "http://localhost:\(port)"
                     importState.browserImportReceiverToken = receiver.currentToken()
+                    importState.isBrowserImportConnectionInfoPresented = true
                 }
             } catch {
                 receiver.stop()
@@ -79,6 +81,7 @@ extension AppModel {
                     importState.browserImportReceiverError = error.localizedDescription
                     importState.browserImportReceiverURL = ""
                     importState.browserImportReceiverToken = ""
+                    importState.isBrowserImportConnectionInfoPresented = false
                 }
             }
         }
@@ -92,6 +95,7 @@ extension AppModel {
         importState.browserImportReceiverError = nil
         importState.browserImportReceiverURL = ""
         importState.browserImportReceiverToken = ""
+        importState.isBrowserImportConnectionInfoPresented = false
         importState.browserImportActiveSessionID = nil
         importState.browserImportCompleted = false
     }
