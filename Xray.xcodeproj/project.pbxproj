@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9E05B23A300EFAC2008AD0E3 /* AVKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9E05B238300EFA8D008AD0E3 /* AVKit.framework */; };
 		9E10AF942E559DA3000C8CB3 /* DeterministicColorGen in Frameworks */ = {isa = PBXBuildFile; productRef = 9E10AF932E559DA3000C8CB3 /* DeterministicColorGen */; };
 		9E2468892FE37CD900E4F869 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 9E2468882FE37CD900E4F869 /* Kingfisher */; };
 		9E4682432E4786F6007AF539 /* OpenAI in Frameworks */ = {isa = PBXBuildFile; productRef = 9E4682422E4786F6007AF539 /* OpenAI */; };
@@ -37,6 +38,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		9E05B238300EFA8D008AD0E3 /* AVKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVKit.framework; path = System/Library/Frameworks/AVKit.framework; sourceTree = SDKROOT; };
 		9ED690AD2E5188800037212B /* Xray.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = Xray.icon; sourceTree = "<group>"; };
 		9EE6EA3B2E40F7D70086300F /* Xray.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Xray.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000000000000000000001 /* XrayTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = XrayTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -60,6 +62,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9E05B23A300EFAC2008AD0E3 /* AVKit.framework in Frameworks */,
 				9E4682432E4786F6007AF539 /* OpenAI in Frameworks */,
 				9EA1CF5E2E45C1950093B787 /* Chroma in Frameworks */,
 				9E10AF942E559DA3000C8CB3 /* DeterministicColorGen in Frameworks */,
@@ -89,6 +92,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		9E05B237300EFA8C008AD0E3 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				9E05B238300EFA8D008AD0E3 /* AVKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		9EE6EA322E40F7D70086300F = {
 			isa = PBXGroup;
 			children = (
@@ -96,6 +107,7 @@
 				A10000000000000000000002 /* XrayTests */,
 				9EE6EA3C2E40F7D70086300F /* Products */,
 				9ED690AD2E5188800037212B /* Xray.icon */,
+				9E05B237300EFA8C008AD0E3 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -394,7 +406,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = JBXG2AJTZG;
 				ENABLE_APP_SANDBOX = YES;
@@ -431,7 +443,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.6;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.alexeyalbert.Xray;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -456,7 +468,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = JBXG2AJTZG;
 				ENABLE_APP_SANDBOX = YES;
@@ -489,7 +501,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.6;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.alexeyalbert.Xray;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
