@@ -61,9 +61,10 @@ struct DomainModelTests {
         #expect(standardColumns[SQLitePostRowDecoder.Layout.standard.bookmarkOrder!] == "bookmark_order")
 
         let rebuildColumns = projectionColumns(SQLitePostRowDecoder.schemaRebuildProjection)
-        #expect(rebuildColumns.count == 19)
+        #expect(rebuildColumns.count == 20)
         #expect(rebuildColumns[SQLitePostRowDecoder.Layout.schemaRebuild.normalizedTextEmbedding!] == "text_embedding_normalized")
         #expect(rebuildColumns[SQLitePostRowDecoder.Layout.schemaRebuild.links] == "links")
+        #expect(rebuildColumns[SQLitePostRowDecoder.Layout.schemaRebuild.topicAnnotationFailed!] == "topic_annotation_failed")
 
         let unorderedColumns = projectionColumns(SQLitePostRowDecoder.projectionWithoutBookmarkOrdering)
         #expect(unorderedColumns.count == 14)
