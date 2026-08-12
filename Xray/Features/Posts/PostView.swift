@@ -675,7 +675,7 @@ extension PostView {
             showRawSQLiteRowAction: DebugSettings.showPostContextDebugOptions ? {
                 Task { await showRawSQLiteRow() }
             } : nil,
-            showSearchExplanationAction: searchDebugContext != nil ? {
+            showSearchExplanationAction: DebugSettings.showPostContextDebugOptions && searchDebugContext != nil ? {
                 Task { await showSearchExplanation() }
             } : nil,
             compareEmbeddingAction: DebugSettings.showPostContextDebugOptions ? {
