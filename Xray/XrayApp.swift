@@ -35,8 +35,12 @@ struct XrayApp: App {
                         Task { await model.refreshPendingEnrichmentWork() }
                     }
                 )
+                .id(model.importState.windowContentRevision)
                 .frame(minWidth: 1050, minHeight: 600)
-                .onAppear { model.loadInitialPostsFromDatabase() }
+                .onAppear {
+                    guard model.importState.posts == nil else { return }
+                    model.loadInitialPostsFromDatabase()
+                }
                 .containerBackground(.regularMaterial, for: .window)
             }
         }

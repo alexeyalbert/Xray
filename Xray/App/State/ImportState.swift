@@ -8,6 +8,7 @@ class ImportState {
     var isLoading: Bool = false
     var allPostsLoaded: Bool = false
     var loadMorePosts: (() -> Void)? = nil
+    var windowContentRevision: Int = 0
     
     // Database import progress
     var isDatabaseImporting: Bool = false

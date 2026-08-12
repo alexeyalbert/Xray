@@ -211,7 +211,15 @@ extension AppModel {
         await processAllPostsEmbeddings()
         await processAllPostsImageEmbeddings()
 
-        await MainActor.run { importState.isEnrichmentQueueRunning = false }
+        // Reload the current feed window, then recreate its complete view hierarchy once the
+        // enrichment queue finishes so every visible card reads the newly persisted topics.
+        let loadedPostCount = await MainActor.run { importState.posts?.count ?? 0 }
+        await refreshVisiblePostsFromDatabase(pageSize: max(100, loadedPostCount))
+
+        await MainActor.run {
+            importState.windowContentRevision &+= 1
+            importState.isEnrichmentQueueRunning = false
+        }
         await refreshPendingEnrichmentWork()
     }
 }
