@@ -53,6 +53,9 @@ struct XrayApp: App {
                     guard model.importState.posts == nil else { return }
                     model.loadInitialPostsFromDatabase()
                 }
+                .background {
+                    MainWindowTint()
+                }
                 .containerBackground(.regularMaterial, for: .window)
             }
         }
@@ -68,5 +71,15 @@ struct XrayApp: App {
         .windowStyle(.hiddenTitleBar)
         .windowToolbarStyle(.unified)
 #endif
+    }
+}
+
+private struct MainWindowTint: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Color(.white)
+            .opacity(colorScheme == .dark ? 0.04 : 0)
+            .ignoresSafeArea()
     }
 }
