@@ -106,7 +106,7 @@ struct PostView: View {
                     shouldAnimateMediaAppearance: shouldAnimateMediaAppearance,
                     isMediaInteractive: false,
                     onMediaSelected: { media in
-                        onMediaSelected(mediaSelectionItem(for: media))
+                        onMediaSelected(mediaSelectionItem(for: media, in: article.allMedia))
                     },
                     dragContextForMedia: mediaSaveContext(for:),
                     contextMenuContent: imageContextMenuView(for:),
@@ -123,7 +123,7 @@ struct PostView: View {
                     isInteractive: isInteractive,
                     dragContextForMedia: mediaSaveContext(for:),
                     onMediaSelected: { media in
-                        onMediaSelected(mediaSelectionItem(for: media))
+                        onMediaSelected(mediaSelectionItem(for: media, in: post.media ?? []))
                     },
                     contextMenuContent: imageContextMenuView(for:),
                     onDebugUpdate: { snapshot in
@@ -139,7 +139,7 @@ struct PostView: View {
                     isInteractive: isInteractive,
                     dragContextForMedia: mediaSaveContext(for:),
                     onMediaSelected: { media in
-                        onMediaSelected(mediaSelectionItem(for: media))
+                        onMediaSelected(mediaSelectionItem(for: media, in: quotedPost.media ?? []))
                     },
                     contextMenuContent: imageContextMenuView(for:),
                     onDebugUpdate: { snapshot in
@@ -701,8 +701,17 @@ extension PostView {
         AnyView(postContextMenuContent(saveImageMedia: MediaSaveCoordinator.isSaveableImageThumbnail(media) ? media : nil))
     }
     
-    private func mediaSelectionItem(for media: Media) -> SelectedMediaItem {
-        SelectedMediaItem(media: media, saveContext: mediaSaveContext(for: media))
+    private func mediaSelectionItem(for media: Media, in gallery: [Media]) -> SelectedMediaItem {
+        let items = gallery.map { galleryMedia in
+            MediaViewerItem(
+                media: galleryMedia,
+                saveContext: mediaSaveContext(for: galleryMedia)
+            )
+        }
+        guard let selectedIndex = items.firstIndex(where: { $0.id == media.id }) else {
+            return SelectedMediaItem(media: media, saveContext: mediaSaveContext(for: media))
+        }
+        return SelectedMediaItem(items: items, selectedIndex: selectedIndex)
     }
     
     private func mediaSaveContext(for media: Media) -> MediaSaveContext? {

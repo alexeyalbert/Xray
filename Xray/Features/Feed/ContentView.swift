@@ -178,6 +178,14 @@ struct ContentView: View {
                         self.selectedMedia = nil
                         return .handled
                     }
+                    .onKeyPress(.leftArrow, phases: [.down, .repeat]) { _ in
+                        moveSelectedMedia(by: -1)
+                        return .handled
+                    }
+                    .onKeyPress(.rightArrow, phases: [.down, .repeat]) { _ in
+                        moveSelectedMedia(by: 1)
+                        return .handled
+                    }
                     .onExitCommand {
                         self.selectedMedia = nil
                     }
@@ -380,6 +388,11 @@ struct ContentView: View {
             //                }
             //            }
         }
+    }
+
+    private func moveSelectedMedia(by offset: Int) {
+        guard let nextSelection = selectedMedia?.moving(by: offset) else { return }
+        selectedMedia = nextSelection
     }
 
     private var infoPopoverContent: some View {

@@ -20,14 +20,40 @@ struct MediaTransferDescriptor: Sendable, Equatable {
     let contentType: UTType?
 }
 
-struct SelectedMediaItem: Identifiable, Equatable {
+struct MediaViewerItem: Identifiable, Equatable {
     let media: Media
     let saveContext: MediaSaveContext?
-    
+
     var id: URL { media.id }
-    
-    static func == (lhs: SelectedMediaItem, rhs: SelectedMediaItem) -> Bool {
+
+    static func == (lhs: MediaViewerItem, rhs: MediaViewerItem) -> Bool {
         lhs.media.id == rhs.media.id && lhs.saveContext == rhs.saveContext
+    }
+}
+
+struct SelectedMediaItem: Identifiable, Equatable {
+    let items: [MediaViewerItem]
+    let selectedIndex: Int
+
+    var media: Media { items[selectedIndex].media }
+    var saveContext: MediaSaveContext? { items[selectedIndex].saveContext }
+    var id: URL { media.id }
+
+    init(media: Media, saveContext: MediaSaveContext?) {
+        self.items = [MediaViewerItem(media: media, saveContext: saveContext)]
+        self.selectedIndex = 0
+    }
+
+    init(items: [MediaViewerItem], selectedIndex: Int) {
+        precondition(items.indices.contains(selectedIndex))
+        self.items = items
+        self.selectedIndex = selectedIndex
+    }
+
+    func moving(by offset: Int) -> SelectedMediaItem? {
+        let destinationIndex = selectedIndex + offset
+        guard items.indices.contains(destinationIndex) else { return nil }
+        return SelectedMediaItem(items: items, selectedIndex: destinationIndex)
     }
 }
 
