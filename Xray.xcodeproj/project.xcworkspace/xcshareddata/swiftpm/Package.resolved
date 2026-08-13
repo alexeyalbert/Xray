@@ -1,5 +1,5 @@
 {
-  "originHash" : "dcf682c9efbfa041d084dc78f481a75d455214673f43aea414194677d0e5f3d1",
+  "originHash" : "8d0ebf062255e6af0fd487b807b0066f5e55de7241afeea5e2b363713e588a31",
   "pins" : [
     {
       "identity" : "appupdater",
@@ -62,15 +62,6 @@
       "state" : {
         "revision" : "0bb916c67f4b9e5c682cbe02a42c701c93ab5021",
         "version" : "0.31.6"
-      }
-    },
-    {
-      "identity" : "openai",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/MacPaw/OpenAI.git",
-      "state" : {
-        "revision" : "40406cf4ef6caeed49ec88071bc6e37f0f04b8d3",
-        "version" : "0.5.0"
       }
     },
     {
@@ -137,15 +128,6 @@
       }
     },
     {
-      "identity" : "swift-http-types",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-http-types",
-      "state" : {
-        "revision" : "db774a277f60063a32d854f2980299caf06da041",
-        "version" : "1.6.0"
-      }
-    },
-    {
       "identity" : "swift-huggingface",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/huggingface/swift-huggingface",
@@ -170,15 +152,6 @@
       "state" : {
         "revision" : "0c0290ff6b24942dadb83a929ffaaa1481df04a2",
         "version" : "1.1.1"
-      }
-    },
-    {
-      "identity" : "swift-openapi-runtime",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-openapi-runtime",
-      "state" : {
-        "revision" : "3d3a8457661daf7fb260ceeb9f0e24e5204ba5fb",
-        "version" : "1.12.0"
       }
     },
     {

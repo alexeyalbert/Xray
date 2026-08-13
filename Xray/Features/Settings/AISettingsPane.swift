@@ -2,8 +2,13 @@ import SwiftUI
 
 struct AISettingsPane: View {
     @Binding var selectedProvider: AIProvider
-    @Binding var apiKey: String
-    @Binding var savedFeedback: String
+    @Binding var openRouterAPIKey: String
+    @Binding var openRouterSavedFeedback: String
+    @Binding var compatibleTopicAPIKey: String
+    @Binding var compatibleTopicSavedFeedback: String
+    @Binding var compatibleTopicBaseURL: String
+    @Binding var compatibleTopicModel: String
+    @Binding var topicConcurrentRequests: Int
     @Binding var selectedEmbeddingProvider: EmbeddingProviderKind
     @Binding var textEmbeddingBatchSize: Int
     @Binding var remoteEmbeddingBaseURL: String
@@ -13,17 +18,24 @@ struct AISettingsPane: View {
 
     let localModelManager: LocalEmbeddingModelManager
     let onSaveSettings: () -> Void
-    let onSaveAPIKey: () -> Void
+    let onSaveOpenRouterAPIKey: () -> Void
+    let onSaveCompatibleTopicAPIKey: () -> Void
     let onSaveRemoteEmbeddingAPIKey: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             TopicGenerationProviderSettings(
                 selectedProvider: $selectedProvider,
-                apiKey: $apiKey,
-                savedFeedback: savedFeedback,
+                openRouterAPIKey: $openRouterAPIKey,
+                openRouterSavedFeedback: openRouterSavedFeedback,
+                compatibleAPIKey: $compatibleTopicAPIKey,
+                compatibleSavedFeedback: compatibleTopicSavedFeedback,
+                compatibleBaseURL: $compatibleTopicBaseURL,
+                compatibleModel: $compatibleTopicModel,
+                concurrentRequests: $topicConcurrentRequests,
                 onSaveSettings: onSaveSettings,
-                onSaveAPIKey: onSaveAPIKey
+                onSaveOpenRouterAPIKey: onSaveOpenRouterAPIKey,
+                onSaveCompatibleAPIKey: onSaveCompatibleTopicAPIKey
             )
 
             TextEmbeddingSettings(
@@ -44,43 +56,151 @@ struct AISettingsPane: View {
 
 private struct TopicGenerationProviderSettings: View {
     @Binding var selectedProvider: AIProvider
-    @Binding var apiKey: String
-    let savedFeedback: String
+    @Binding var openRouterAPIKey: String
+    let openRouterSavedFeedback: String
+    @Binding var compatibleAPIKey: String
+    let compatibleSavedFeedback: String
+    @Binding var compatibleBaseURL: String
+    @Binding var compatibleModel: String
+    @Binding var concurrentRequests: Int
     let onSaveSettings: () -> Void
-    let onSaveAPIKey: () -> Void
+    let onSaveOpenRouterAPIKey: () -> Void
+    let onSaveCompatibleAPIKey: () -> Void
 
     var body: some View {
         SettingsSectionCard("Topic Generation Provider") {
             Picker("Provider", selection: $selectedProvider) {
                 ForEach(AIProvider.allCases, id: \.self) { provider in
-                    Text(provider.rawValue).tag(provider)
+                    Text(provider.displayName).tag(provider)
                 }
             }
             .labelsHidden()
             .pickerStyle(.menu)
-            .onChange(of: selectedProvider) { _, _ in onSaveSettings() }
+            .onChange(of: selectedProvider) { _, newProvider in
+                concurrentRequests = OpenAIManager.topicConcurrentRequests(for: newProvider)
+                onSaveSettings()
+            }
             .padding(.bottom, 10)
 
-            HStack(alignment: .center, spacing: 10) {
-                SecureField("API Key", text: $apiKey)
-                    .textContentType(.password)
-                    .textFieldStyle(.roundedBorder)
+            if selectedProvider == .openAICompatible {
+                OpenAICompatibleTopicFields(
+                    baseURL: $compatibleBaseURL,
+                    model: $compatibleModel,
+                    onSaveSettings: onSaveSettings
+                )
 
-                Button("Save", action: onSaveAPIKey)
-                    .buttonStyle(.borderedProminent)
+                Divider()
+                    .padding(.vertical, 10)
+
+                TopicAPIKeyField(
+                    apiKey: $compatibleAPIKey,
+                    savedFeedback: compatibleSavedFeedback,
+                    onSaveAPIKey: onSaveCompatibleAPIKey
+                )
+            } else {
+                TopicAPIKeyField(
+                    apiKey: $openRouterAPIKey,
+                    savedFeedback: openRouterSavedFeedback,
+                    onSaveAPIKey: onSaveOpenRouterAPIKey
+                )
             }
 
-            if !savedFeedback.isEmpty {
-                Text(savedFeedback)
-                    .font(.caption)
+            Divider()
+                .padding(.vertical, 10)
+
+            TopicGenerationConcurrentRequestsSetting(
+                concurrentRequests: $concurrentRequests,
+                onSaveSettings: onSaveSettings
+            )
+        }
+    }
+}
+
+private struct TopicAPIKeyField: View {
+    @Binding var apiKey: String
+    let savedFeedback: String
+    let onSaveAPIKey: () -> Void
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 10) {
+            SecureField("API Key", text: $apiKey)
+                .textContentType(.password)
+                .textFieldStyle(.roundedBorder)
+
+            Button("Save", action: onSaveAPIKey)
+                .buttonStyle(.borderedProminent)
+        }
+
+        if !savedFeedback.isEmpty {
+            Text(savedFeedback)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+private struct OpenAICompatibleTopicFields: View {
+    @Binding var baseURL: String
+    @Binding var model: String
+    let onSaveSettings: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Base URL")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
+            TextField("https://api.openai.com/v1", text: $baseURL)
+                .textFieldStyle(.roundedBorder)
+                .onChange(of: baseURL) { _, _ in onSaveSettings() }
+        }
+
+        Divider()
+            .padding(.vertical, 10)
+
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Model")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
+            TextField("gpt-4.1-mini", text: $model)
+                .textFieldStyle(.roundedBorder)
+                .onChange(of: model) { _, _ in onSaveSettings() }
+        }
+    }
+}
+
+private struct TopicGenerationConcurrentRequestsSetting: View {
+    @Binding var concurrentRequests: Int
+    let onSaveSettings: () -> Void
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Concurrent Requests")
+                    .font(.subheadline.weight(.medium))
+
+                Text("Maximum simultaneous topic annotation requests")
+                    .font(.footnote)
                     .foregroundStyle(.secondary)
             }
 
-            Text("Key stored securely in the macOS Keychain")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-                .padding(5)
+            Spacer()
+
+            TextField("Concurrent Requests", value: $concurrentRequests, format: .number)
+                .textFieldStyle(.roundedBorder)
+                .multilineTextAlignment(.trailing)
+                .monospacedDigit()
+                .frame(width: 72)
+                .accessibilityLabel("Concurrent topic annotation requests")
+                .accessibilityValue("\(concurrentRequests) concurrent requests")
+                .onChange(of: concurrentRequests) { _, newValue in
+                    concurrentRequests = min(
+                        max(newValue, OpenAIManager.topicConcurrentRequestsRange.lowerBound),
+                        OpenAIManager.topicConcurrentRequestsRange.upperBound
+                    )
+                    onSaveSettings()
+                }
         }
+        .padding(.vertical, 8)
     }
 }
 

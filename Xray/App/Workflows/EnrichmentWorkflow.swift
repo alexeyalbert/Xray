@@ -36,7 +36,12 @@ extension AppModel {
                 importState.topicCompleted = false
             }
 
-            let pageSize = 1000
+            // Persist after every configured app-side batch so completed work
+            // survives long-running jobs regardless of provider.
+            let pageSize = OpenAIManager.topicPersistencePageSize(
+                for: OpenAIManager.currentProvider,
+                concurrentRequests: OpenAIManager.topicConcurrentRequests
+            )
             let maxAnnotationPasses = 4
             var updatedThisRun = 0
             var annotationPass = 0
@@ -59,15 +64,21 @@ extension AppModel {
 
                     let toAnnotate = page
                     if !toAnnotate.isEmpty {
-                        let batchResult = await TopicAnnotator.annotatePostsWithTopics(toAnnotate) { [self] current, totalInPage in
-                            Task { @MainActor in
-                                // Reflect per-page progress into overall persisted-topic progress.
-                                let pageFraction = Double(current) / Double(max(totalInPage, 1))
-                                let already = Double(completedCount) / Double(max(total, 1))
-                                let progress = min(1.0, already + pageFraction * (Double(toAnnotate.count) / Double(max(total, 1))))
-                                importState.topicProgress = progress
-                                importState.databaseImportProgress = progress
+                        let batchResult = await TopicAnnotator.annotatePostsWithTopics(
+                            toAnnotate,
+                            onProgress: { [self] current, totalInPage in
+                                Task { @MainActor in
+                                    // Reflect per-page progress into overall persisted-topic progress.
+                                    let pageFraction = Double(current) / Double(max(totalInPage, 1))
+                                    let already = Double(completedCount) / Double(max(total, 1))
+                                    let progress = min(1.0, already + pageFraction * (Double(toAnnotate.count) / Double(max(total, 1))))
+                                    importState.topicProgress = progress
+                                    importState.databaseImportProgress = progress
+                                }
                             }
+                        )
+                        if let configurationError = batchResult.configurationError {
+                            throw TopicAnnotationConfigurationError(message: configurationError)
                         }
                         for postID in batchResult.persistentSkipCandidatePostIDs {
                             persistentSkipCandidateAttempts[postID, default: 0] += 1
@@ -184,7 +195,7 @@ extension AppModel {
         do {
             try await sqliteManager.connect()
             let hasPendingTopics: Bool
-            if OpenAIManager.currentAPIKey() != nil {
+            if OpenAIManager.isTopicGenerationConfigured {
                 hasPendingTopics = try await sqliteManager.getTopicAnnotationCounts().missing > 0
             } else {
                 hasPendingTopics = false
@@ -205,7 +216,7 @@ extension AppModel {
         guard !importState.isDatabaseImporting, !importState.isEnrichmentQueueRunning else { return }
         await MainActor.run { importState.isEnrichmentQueueRunning = true }
 
-        if OpenAIManager.currentAPIKey() != nil {
+        if OpenAIManager.isTopicGenerationConfigured {
             await processMissingTopics()
         }
         await processAllPostsEmbeddings()

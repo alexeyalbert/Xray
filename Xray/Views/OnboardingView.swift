@@ -673,7 +673,7 @@ private struct OpenRouterSetupStep: View {
                     .fill(Color(nsColor: .controlBackgroundColor))
             )
             .onAppear {
-                apiKey = OpenAIManager.currentAPIKey() ?? ""
+                apiKey = OpenAIManager.apiKey(for: .openrouter) ?? ""
             }
         }
     }
@@ -685,7 +685,7 @@ private struct OpenRouterSetupStep: View {
             return
         }
 
-        guard KeychainHelper.saveString(trimmed, for: AppSecretsKey.openAIAPIKey.rawValue) else {
+        guard KeychainHelper.saveString(trimmed, for: AppSecretsKey.openRouterAPIKey.rawValue) else {
             feedback = "The API key could not be saved to Keychain."
             return
         }

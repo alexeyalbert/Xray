@@ -16,9 +16,14 @@ struct SettingsView: View {
     @AppStorage(DebugSettings.showTemporaryHidePostActionKey) private var showTemporaryHidePostAction: Bool = false
     @AppStorage(DebugSettings.showToolbarInfoButtonKey) private var showToolbarInfoButton: Bool = false
 
-    @State private var apiKey = ""
-    @State private var savedFeedback = ""
-    @State private var selectedProvider: AIProvider = .openai
+    @State private var openRouterAPIKey = ""
+    @State private var openRouterSavedFeedback = ""
+    @State private var compatibleTopicAPIKey = ""
+    @State private var compatibleTopicSavedFeedback = ""
+    @State private var selectedProvider: AIProvider = .openAICompatible
+    @State private var compatibleTopicBaseURL = OpenAIManager.defaultCompatibleBaseURL
+    @State private var compatibleTopicModel = OpenAIManager.defaultCompatibleModel
+    @State private var topicConcurrentRequests = OpenAIManager.defaultCompatibleConcurrentRequests
     @State private var selectedEmbeddingProvider: EmbeddingProviderKind = .local
     @State private var localModelManager = LocalEmbeddingModelManager()
     @State private var textEmbeddingBatchSize = EmbeddingProviderSettings.defaultBatchSize
@@ -47,8 +52,13 @@ struct SettingsView: View {
                     animateExpandedMediaAppearance: $animateExpandedMediaAppearance,
                     animateExpandedMediaResize: $animateExpandedMediaResize,
                     selectedProvider: $selectedProvider,
-                    apiKey: $apiKey,
-                    savedFeedback: $savedFeedback,
+                    openRouterAPIKey: $openRouterAPIKey,
+                    openRouterSavedFeedback: $openRouterSavedFeedback,
+                    compatibleTopicAPIKey: $compatibleTopicAPIKey,
+                    compatibleTopicSavedFeedback: $compatibleTopicSavedFeedback,
+                    compatibleTopicBaseURL: $compatibleTopicBaseURL,
+                    compatibleTopicModel: $compatibleTopicModel,
+                    topicConcurrentRequests: $topicConcurrentRequests,
                     selectedEmbeddingProvider: $selectedEmbeddingProvider,
                     textEmbeddingBatchSize: $textEmbeddingBatchSize,
                     remoteEmbeddingBaseURL: $remoteEmbeddingBaseURL,
@@ -63,7 +73,8 @@ struct SettingsView: View {
                     localModelManager: localModelManager,
                     importState: importState,
                     onSaveSettings: saveSettings,
-                    onSaveAPIKey: saveAPIKey,
+                    onSaveOpenRouterAPIKey: saveOpenRouterAPIKey,
+                    onSaveCompatibleTopicAPIKey: saveCompatibleTopicAPIKey,
                     onSaveRemoteEmbeddingAPIKey: saveRemoteEmbeddingAPIKey,
                     onSavePreferredPort: savePreferredPort,
                     onRebuildDatabaseSchema: onRebuildDatabaseSchema,
@@ -84,13 +95,18 @@ struct SettingsView: View {
         }
     }
 
-    private func loadAPIKey() {
-        apiKey = KeychainHelper.readString(for: AppSecretsKey.openAIAPIKey.rawValue) ?? ""
+    private func loadTopicAPIKeys() {
+        OpenAIManager.migrateTopicAPIKeysIfNeeded()
+        openRouterAPIKey = OpenAIManager.apiKey(for: .openrouter) ?? ""
+        compatibleTopicAPIKey = OpenAIManager.apiKey(for: .openAICompatible) ?? ""
     }
 
     private func loadSettings() {
-        loadAPIKey()
+        loadTopicAPIKeys()
         selectedProvider = OpenAIManager.currentProvider
+        compatibleTopicBaseURL = OpenAIManager.compatibleBaseURL
+        compatibleTopicModel = OpenAIManager.compatibleModel
+        topicConcurrentRequests = OpenAIManager.topicConcurrentRequests(for: selectedProvider)
         selectedEmbeddingProvider = EmbeddingProviderSettings.provider
         textEmbeddingBatchSize = EmbeddingProviderSettings.batchSize
         remoteEmbeddingBaseURL = EmbeddingProviderSettings.remoteBaseURL
@@ -101,23 +117,42 @@ struct SettingsView: View {
 
     private func saveSettings() {
         OpenAIManager.currentProvider = selectedProvider
+        OpenAIManager.compatibleBaseURL = compatibleTopicBaseURL
+        OpenAIManager.compatibleModel = compatibleTopicModel
+        OpenAIManager.setTopicConcurrentRequests(topicConcurrentRequests, for: selectedProvider)
         EmbeddingProviderSettings.provider = selectedEmbeddingProvider
         EmbeddingProviderSettings.batchSize = textEmbeddingBatchSize
         EmbeddingProviderSettings.remoteBaseURL = remoteEmbeddingBaseURL
         EmbeddingProviderSettings.remoteModel = remoteEmbeddingModel
     }
 
-    private func saveAPIKey() {
-        if apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            _ = KeychainHelper.delete(for: AppSecretsKey.openAIAPIKey.rawValue)
-            savedFeedback = "Removed key"
-        } else if KeychainHelper.saveString(apiKey, for: AppSecretsKey.openAIAPIKey.rawValue) {
-            savedFeedback = "Saved"
-        } else {
-            savedFeedback = "Save failed"
+    private func saveOpenRouterAPIKey() {
+        openRouterSavedFeedback = saveTopicAPIKey(
+            openRouterAPIKey,
+            for: AppSecretsKey.openRouterAPIKey.rawValue
+        )
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            openRouterSavedFeedback = ""
         }
+    }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { savedFeedback = "" }
+    private func saveCompatibleTopicAPIKey() {
+        compatibleTopicSavedFeedback = saveTopicAPIKey(
+            compatibleTopicAPIKey,
+            for: AppSecretsKey.openAICompatibleTopicAPIKey.rawValue
+        )
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            compatibleTopicSavedFeedback = ""
+        }
+    }
+
+    private func saveTopicAPIKey(_ value: String, for account: String) -> String {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            _ = KeychainHelper.delete(for: account)
+            return "Removed key"
+        }
+        return KeychainHelper.saveString(trimmed, for: account) ? "Saved" : "Save failed"
     }
 
     private func saveRemoteEmbeddingAPIKey() {
