@@ -33,6 +33,9 @@ struct XrayApp: App {
                     onResetDatabase: {
                         Task { await model.resetDatabaseAndUI() }
                     },
+                    onResetStoredTopics: {
+                        Task { await model.resetStoredTopicsAndUI() }
+                    },
                     onGenerateRemainingEnrichments: {
                         Task.detached(priority: .userInitiated) {
                             await model.processRemainingEnrichments()

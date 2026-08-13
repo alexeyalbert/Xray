@@ -33,24 +33,29 @@ enum TopicAnnotator {
     }
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "Xray", category: "TopicAnnotator")
     private static let topicInstructions = """
-    You are a topic classification assistant. Analyze social media posts containing text and optional images to identify relevant topics. Some posts' topics might not be obvious or evident from the text alone, so use the image content (if available) to inform your analysis (e.g. photography posts). In some cases, the image attached may simply be a reaction image or meme unrelated to the actual contents/topic/thesis of the post. Use your best judgement to determine when it is appropriate to consider an image with a post. If a post is primary talking about a person, or is about some drama or discourse about a person, its fine to use the name of the person being addressed as a topic.
+    You are a topic classification assistant. Analyze social media posts containing text and optional images to identify relevant topics. Some posts' topics might not be obvious or evident from the text alone, so use the image content (if available) to inform your analysis (e.g. photography posts). In some cases, the image attached may simply be a reaction image or meme unrelated to the actual contents/topic/thesis of the post. Use your best judgement to determine when it is appropriate to consider an image with a post. If a post is primarily talking about a person, or is about some drama or discourse about a person, its fine to use the name of the person being addressed as a topic. Use proper capitalization for topics, including cases where the topic might include an acronym (e.g. 'GPU' or 'GPUs'), or simply due to the known capitalization style of the word (e.g. 'iPhone' or 'iOS'). Otherwise, for common nouns, just use title-case (e.g. 'Sci-Fi' or 'Machine Learning').
 
     Return ONLY a minified JSON object with this exact schema:
     {"primary_topic":"<word>","secondary_topics":["<topic>","<topic>"]}
 
     Requirements:
-    - primary_topic: single lowercase word, no punctuation or hashtags
-    - secondary_topics: array of 1-3 lowercase topics (1-3 words each), distinct from primary_topic
+    - primary_topic: single word, no punctuation or hashtags
+    - secondary_topics: array of 1-3 topics (1-3 words each), distinct from primary_topic
     - Output only valid JSON, no explanations or code blocks
     - Begin with '{' and end with '}'
 
-    Example: {"primary_topic":"technology","secondary_topics":["ai","software"]}
+    Example: {"primary_topic":"Technology","secondary_topics":["AI","Software"]}
     """
     private static let topicImageLimit = 8
     private static let topicTemperature = 0.1
     private static let topicTopP = 0.8
 
     private static let openAICache = NSCache<NSNumber, NSData>()
+
+    static func clearCache() {
+        openAICache.removeAllObjects()
+    }
+
     private enum MessageContent: Encodable {
         case text(String)
         case parts([ContentPart])
@@ -541,7 +546,7 @@ enum TopicAnnotator {
         return dataURL
     }
 
-    private static func parseTopics(from text: String) -> GeneratedTopics? {
+    static func parseTopics(from text: String) -> GeneratedTopics? {
         func extractJSONCandidate(from text: String) -> String? {
             let pattern = #"\{[\s\S]*?\}"#
             guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return nil }
@@ -563,13 +568,20 @@ enum TopicAnnotator {
 
         let primary = parsed.primary_topic
             .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
-        var secondary = Array(Set(parsed.secondary_topics.map { $0
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased() }))
-        secondary.removeAll { $0 == primary || $0.isEmpty }
-        secondary = Array(secondary.prefix(3))
-        return GeneratedTopics(primary_topic: primary, secondary_topics: secondary)
+        let normalizedPrimary = primary.lowercased()
+        var seenSecondaryTopics = Set<String>()
+        let secondary = parsed.secondary_topics.compactMap { topic -> String? in
+            let trimmed = topic.trimmingCharacters(in: .whitespacesAndNewlines)
+            let normalized = trimmed.lowercased()
+            guard !trimmed.isEmpty,
+                  normalized != normalizedPrimary,
+                  seenSecondaryTopics.insert(normalized).inserted else {
+                return nil
+            }
+            return trimmed
+        }
+        let limitedSecondary = Array(secondary.prefix(3))
+        return GeneratedTopics(primary_topic: primary, secondary_topics: limitedSecondary)
     }
 
 }

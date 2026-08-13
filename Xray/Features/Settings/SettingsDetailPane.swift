@@ -39,6 +39,7 @@ struct SettingsDetailPane: View {
     let onSavePreferredPort: () -> Void
     let onRebuildDatabaseSchema: () -> Void
     let onResetDatabase: () -> Void
+    let onResetStoredTopics: () -> Void
 
     var body: some View {
         switch category {
@@ -84,7 +85,8 @@ struct SettingsDetailPane: View {
                 showToolbarInfoButton: $showToolbarInfoButton,
                 importState: importState,
                 onRebuildDatabaseSchema: onRebuildDatabaseSchema,
-                onResetDatabase: onResetDatabase
+                onResetDatabase: onResetDatabase,
+                onResetStoredTopics: onResetStoredTopics
             )
         }
     }

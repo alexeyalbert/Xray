@@ -6,6 +6,7 @@ struct SettingsView: View {
     let importState: ImportState
     let onRebuildDatabaseSchema: () -> Void
     let onResetDatabase: () -> Void
+    let onResetStoredTopics: () -> Void
 
     @Environment(\.dismiss) private var dismiss
     @AppStorage(MediaViewerSettings.roundedCornersKey) private var useRoundedMediaCorners: Bool = true
@@ -78,7 +79,8 @@ struct SettingsView: View {
                     onSaveRemoteEmbeddingAPIKey: saveRemoteEmbeddingAPIKey,
                     onSavePreferredPort: savePreferredPort,
                     onRebuildDatabaseSchema: onRebuildDatabaseSchema,
-                    onResetDatabase: onResetDatabase
+                    onResetDatabase: onResetDatabase,
+                    onResetStoredTopics: onResetStoredTopics
                 )
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 20)
@@ -211,7 +213,8 @@ private struct SettingsCloseButton: View {
     SettingsView(
         importState: ImportState(),
         onRebuildDatabaseSchema: {},
-        onResetDatabase: {}
+        onResetDatabase: {},
+        onResetStoredTopics: {}
     )
     .frame(width: SettingsView.modalSize.width, height: SettingsView.modalSize.height)
 }

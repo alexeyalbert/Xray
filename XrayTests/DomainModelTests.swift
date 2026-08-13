@@ -26,8 +26,8 @@ struct DomainModelTests {
             url: postURL,
             text_embedding: [],
             img_embedding: [],
-            primary_topic: "software",
-            secondary_topics: ["swift"]
+            primary_topic: "Software",
+            secondary_topics: ["SwiftUI", "OpenAI API"]
         )
 
         let encoded = try JSONEncoder().encode(post)
@@ -37,8 +37,8 @@ struct DomainModelTests {
         #expect(decoded.links.count == 1)
         #expect(decoded.links.first?.destination == destination)
         #expect(decoded.links.first?.displayName == "example.com/article")
-        #expect(decoded.primary_topic == "software")
-        #expect(decoded.secondary_topics == ["swift"])
+        #expect(decoded.primary_topic == "Software")
+        #expect(decoded.secondary_topics == ["SwiftUI", "OpenAI API"])
     }
 
     @Test("HTML entities decode in imported text models")
@@ -47,10 +47,14 @@ struct DomainModelTests {
         #expect("No entities".decodedHTMLText == "No entities")
     }
 
-    @Test("Topic labels preserve product capitalization")
-    func topicDisplayFormatting() {
-        #expect(TopicDisplayFormatter.displayName(for: "swiftui development") == "SwiftUI Development")
-        #expect(TopicDisplayFormatter.displayName(for: "  openai   api ") == "OpenAI API")
+    @Test("Generated topics preserve provider capitalization")
+    func generatedTopicCapitalization() throws {
+        let topics = try #require(TopicAnnotator.parseTopics(from: """
+        {"primary_topic":"  Technology  ","secondary_topics":["AI","OpenAI API","ai","SwiftUI"]}
+        """))
+
+        #expect(topics.primary_topic == "Technology")
+        #expect(topics.secondary_topics == ["AI", "OpenAI API", "SwiftUI"])
     }
 
     @Test("Topic generation exposes only OpenRouter and OpenAI-compatible providers")

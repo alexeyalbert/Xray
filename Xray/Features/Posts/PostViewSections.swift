@@ -179,7 +179,7 @@ struct PostTopicChips: View {
                     if !primaryTopic.isEmpty {
                         let (background, foreground) = DeterministicColor.uiSet(primaryTopic)
                         PostTopicChip(
-                            title: TopicDisplayFormatter.displayName(for: primaryTopic),
+                            title: primaryTopic,
                             foregroundStyle: AnyShapeStyle(foreground),
                             fill: AnyShapeStyle(background),
                             isInteractive: isInteractive,
@@ -191,7 +191,7 @@ struct PostTopicChips: View {
 
                     ForEach(secondaryTopics, id: \.self) { topic in
                         PostTopicChip(
-                            title: TopicDisplayFormatter.displayName(for: topic),
+                            title: topic,
                             foregroundStyle: AnyShapeStyle(Color(NSColor.secondaryLabelColor)),
                             fill: AnyShapeStyle(Color(NSColor.tertiarySystemFill)),
                             isInteractive: isInteractive,

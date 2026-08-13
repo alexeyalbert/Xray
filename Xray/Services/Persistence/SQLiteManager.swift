@@ -952,6 +952,18 @@ actor SQLiteManager {
         try stmt.run(Int64(postID))
     }
 
+    func clearAllTopics() async throws -> Int {
+        try await connect()
+        let postCount = try await getPostCount()
+        try db.run("""
+            UPDATE Posts
+            SET primary_topic = '',
+                secondary_topics = '[]',
+                topic_annotation_failed = 0;
+            """)
+        return postCount
+    }
+
     func updateTopics(forPostID postID: Int, primaryTopic: String, secondaryTopics: [String]) async throws {
         try await connect()
         let stmt = try db.prepare("""

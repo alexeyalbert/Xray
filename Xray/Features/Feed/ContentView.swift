@@ -18,6 +18,7 @@ struct ContentView: View {
     @Binding var isShowingSettings: Bool
     let onRebuildDatabaseSchema: () -> Void
     let onResetDatabase: () -> Void
+    let onResetStoredTopics: () -> Void
     let onGenerateRemainingEnrichments: () -> Void
     let onRefreshEnrichmentAvailability: () -> Void
     let onPrepareForUpdate: () -> Void
@@ -236,7 +237,8 @@ struct ContentView: View {
                 SettingsView(
                     importState: importState,
                     onRebuildDatabaseSchema: onRebuildDatabaseSchema,
-                    onResetDatabase: onResetDatabase
+                    onResetDatabase: onResetDatabase,
+                    onResetStoredTopics: onResetStoredTopics
                 )
                     .frame(width: SettingsView.modalSize.width, height: SettingsView.modalSize.height)
             }

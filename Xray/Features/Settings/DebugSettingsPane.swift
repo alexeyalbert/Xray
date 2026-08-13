@@ -7,6 +7,7 @@ struct DebugSettingsPane: View {
     let importState: ImportState
     let onRebuildDatabaseSchema: () -> Void
     let onResetDatabase: () -> Void
+    let onResetStoredTopics: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -18,7 +19,8 @@ struct DebugSettingsPane: View {
             DatabaseMaintenanceSettings(
                 importState: importState,
                 onRebuildDatabaseSchema: onRebuildDatabaseSchema,
-                onResetDatabase: onResetDatabase
+                onResetDatabase: onResetDatabase,
+                onResetStoredTopics: onResetStoredTopics
             )
         }
     }
@@ -60,15 +62,22 @@ private struct DatabaseMaintenanceSettings: View {
     let importState: ImportState
     let onRebuildDatabaseSchema: () -> Void
     let onResetDatabase: () -> Void
+    let onResetStoredTopics: () -> Void
 
     @State private var isConfirmingSchemaRebuild = false
     @State private var isConfirmingDatabaseReset = false
+    @State private var isConfirmingTopicReset = false
     @State private var showsMaintenanceStatus = false
+
+    private var isTopicResetDisabled: Bool {
+        importState.isDatabaseImporting
+            || importState.isEnrichmentQueueRunning
+            || importState.isTopicAnnotating
+    }
 
     var body: some View {
         SettingsSectionCard(
-            "Database Maintenance",
-            footer: "These tools operate on Xray's local SQLite database. Downloaded models and app settings are not affected."
+            "Database Maintenance"
         ) {
             DatabaseMaintenanceRow(
                 title: "Rebuild Database Schema",
@@ -77,6 +86,19 @@ private struct DatabaseMaintenanceSettings: View {
                 systemImage: "arrow.triangle.2.circlepath",
                 isDisabled: importState.isDatabaseImporting,
                 action: { isConfirmingSchemaRebuild = true }
+            )
+
+            Divider()
+                .padding(.vertical, 8)
+
+            DatabaseMaintenanceRow(
+                title: "Reset Stored Topics",
+                description: "Deletes every post's primary and secondary topic annotations and makes all posts eligible for topic annotation again. Posts, media, links, embeddings, and all other data are preserved.",
+                buttonTitle: "Reset Topics…",
+                systemImage: "tag.slash",
+                role: .destructive,
+                isDisabled: isTopicResetDisabled,
+                action: { isConfirmingTopicReset = true }
             )
 
             Divider()
@@ -110,6 +132,18 @@ private struct DatabaseMaintenanceSettings: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Xray will back up the current database, recreate its schema, and restore your posts. Keep Xray open until the rebuild finishes.")
+        }
+        .confirmationDialog(
+            "Reset all stored topics?",
+            isPresented: $isConfirmingTopicReset
+        ) {
+            Button("Reset Stored Topics", role: .destructive) {
+                showsMaintenanceStatus = true
+                onResetStoredTopics()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This deletes only the primary and secondary topic annotations from every post. Posts and all unrelated data remain unchanged.")
         }
         .confirmationDialog(
             "Reset the database?",

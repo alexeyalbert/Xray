@@ -46,6 +46,7 @@ private struct ContentViewSearchCapsulePreview: View {
             isShowingSettings: $isShowingSettings,
             onRebuildDatabaseSchema: {},
             onResetDatabase: {},
+            onResetStoredTopics: {},
             onGenerateRemainingEnrichments: {},
             onRefreshEnrichmentAvailability: {},
             onPrepareForUpdate: {}
