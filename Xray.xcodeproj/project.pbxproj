@@ -24,6 +24,7 @@
 		9ED690AE2E5188800037212B /* Xray.icon in Resources */ = {isa = PBXBuildFile; fileRef = 9ED690AD2E5188800037212B /* Xray.icon */; };
 		9ED690D32E5252E80037212B /* SQLiteVecCLI in Frameworks */ = {isa = PBXBuildFile; productRef = 9ED690D22E5252E80037212B /* SQLiteVecCLI */; };
 		9ED6915A2E5401780037212B /* DeterministicColorGen in Frameworks */ = {isa = PBXBuildFile; productRef = 9ED691592E5401780037212B /* DeterministicColorGen */; };
+		9EECDB3E302D1DD600568E2A /* AppUpdater in Frameworks */ = {isa = PBXBuildFile; productRef = 9EECDB3D302D1DD600568E2A /* AppUpdater */; };
 		9EF0396C3006B7F6001FBE87 /* HuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = 9EF039693006B7F6001FBE87 /* HuggingFace */; };
 /* End PBXBuildFile section */
 
@@ -66,6 +67,7 @@
 				9E4682432E4786F6007AF539 /* OpenAI in Frameworks */,
 				9EA1CF5E2E45C1950093B787 /* Chroma in Frameworks */,
 				9E10AF942E559DA3000C8CB3 /* DeterministicColorGen in Frameworks */,
+				9EECDB3E302D1DD600568E2A /* AppUpdater in Frameworks */,
 				9ED6915A2E5401780037212B /* DeterministicColorGen in Frameworks */,
 				9E8C404E2E40F89D0090E74B /* MLXEmbeddings in Frameworks */,
 				9EA1CF642E460B900093B787 /* MLXFFT in Frameworks */,
@@ -156,6 +158,7 @@
 				9E10AF932E559DA3000C8CB3 /* DeterministicColorGen */,
 				9EF039693006B7F6001FBE87 /* HuggingFace */,
 				9E2468882FE37CD900E4F869 /* Kingfisher */,
+				9EECDB3D302D1DD600568E2A /* AppUpdater */,
 			);
 			productName = Xray;
 			productReference = 9EE6EA3B2E40F7D70086300F /* Xray.app */;
@@ -222,6 +225,7 @@
 				9E10AF922E559DA3000C8CB3 /* XCRemoteSwiftPackageReference "DeterministicColorGen" */,
 				9E2468872FE37CD900E4F869 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 				9EF039663006B7F6001FBE87 /* XCRemoteSwiftPackageReference "swift-huggingface" */,
+				9EECDB3C302D1DD600568E2A /* XCRemoteSwiftPackageReference "AppUpdater" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 9EE6EA3C2E40F7D70086300F /* Products */;
@@ -409,7 +413,7 @@
 				CURRENT_PROJECT_VERSION = 3;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = JBXG2AJTZG;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_FILE_ACCESS_DOWNLOADS_FOLDER = readonly;
 				ENABLE_FILE_ACCESS_MOVIES_FOLDER = readonly;
 				ENABLE_FILE_ACCESS_MUSIC_FOLDER = readonly;
@@ -472,7 +476,7 @@
 				CURRENT_PROJECT_VERSION = 3;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = JBXG2AJTZG;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
@@ -670,6 +674,14 @@
 				minimumVersion = 0.0.13;
 			};
 		};
+		9EECDB3C302D1DD600568E2A /* XCRemoteSwiftPackageReference "AppUpdater" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mxcl/AppUpdater.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.1.0;
+			};
+		};
 		9EF039663006B7F6001FBE87 /* XCRemoteSwiftPackageReference "swift-huggingface" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/huggingface/swift-huggingface";
@@ -755,6 +767,11 @@
 		9ED691592E5401780037212B /* DeterministicColorGen */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = DeterministicColorGen;
+		};
+		9EECDB3D302D1DD600568E2A /* AppUpdater */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9EECDB3C302D1DD600568E2A /* XCRemoteSwiftPackageReference "AppUpdater" */;
+			productName = AppUpdater;
 		};
 		9EF039693006B7F6001FBE87 /* HuggingFace */ = {
 			isa = XCSwiftPackageProductDependency;

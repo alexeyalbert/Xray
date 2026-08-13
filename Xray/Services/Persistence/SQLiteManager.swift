@@ -315,9 +315,7 @@ actor SQLiteManager {
     func connect() async throws {
         if db == nil {
             let fm = FileManager.default
-            let appSupport = try fm.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-            let dir = appSupport.appendingPathComponent("Xray", isDirectory: true)
-            try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+            let dir = try XrayStorage.applicationSupportDirectory(fileManager: fm)
             let path = dir.appendingPathComponent(dbFileName).path
             db = try Connection(path)
             isDatabaseReady = false
@@ -787,9 +785,7 @@ actor SQLiteManager {
 
     private func databaseFileURLs() throws -> (main: URL, wal: URL, shm: URL) {
         let fm = FileManager.default
-        let appSupport = try fm.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-        let dir = appSupport.appendingPathComponent("Xray", isDirectory: true)
-        try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        let dir = try XrayStorage.applicationSupportDirectory(fileManager: fm)
         let main = dir.appendingPathComponent(dbFileName)
         return (
             main: main,

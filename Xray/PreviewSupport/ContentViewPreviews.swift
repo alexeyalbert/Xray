@@ -37,15 +37,18 @@ private struct ContentViewSearchCapsulePreview: View {
     @State private var isShowingSearchCapsule = true
     @State private var dotCount = 1
     @State private var isShowingSettings = false
+    @State private var appUpdateController = AppUpdateController()
     
     var body: some View {
         ContentView(
             importState: importState,
+            appUpdateController: appUpdateController,
             isShowingSettings: $isShowingSettings,
             onRebuildDatabaseSchema: {},
             onResetDatabase: {},
             onGenerateRemainingEnrichments: {},
-            onRefreshEnrichmentAvailability: {}
+            onRefreshEnrichmentAvailability: {},
+            onPrepareForUpdate: {}
         )
             .overlay(alignment: .bottom) {
                 SearchStatusCapsule(isVisible: isShowingSearchCapsule, dotCount: dotCount)
@@ -74,4 +77,3 @@ private struct ContentViewSearchCapsulePreview: View {
     ContentViewSearchCapsulePreview()
         .frame(width: 800, height: 600)
 }
-

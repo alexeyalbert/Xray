@@ -3,8 +3,14 @@ import SwiftUI
 @main
 struct XrayApp: App {
     @State private var model = AppModel()
+    @State private var appUpdateController = AppUpdateController()
     @State private var isShowingSettings = false
-    @State private var isShowingOnboarding = !OnboardingSettings.hasCompleted
+    @State private var isShowingOnboarding: Bool
+
+    init() {
+        XrayStorage.migrateLegacySandboxDefaultsIfNeeded()
+        _isShowingOnboarding = State(initialValue: !OnboardingSettings.hasCompleted)
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -19,6 +25,7 @@ struct XrayApp: App {
             } else {
                 ContentView(
                     importState: model.importState,
+                    appUpdateController: appUpdateController,
                     isShowingSettings: $isShowingSettings,
                     onRebuildDatabaseSchema: {
                         Task { await model.rebuildDatabaseSchemaPreservingData() }
@@ -33,6 +40,11 @@ struct XrayApp: App {
                     },
                     onRefreshEnrichmentAvailability: {
                         Task { await model.refreshPendingEnrichmentWork() }
+                    },
+                    onPrepareForUpdate: {
+                        if model.importState.isBrowserImportReceiverRunning {
+                            model.endBrowserImportReceiver()
+                        }
                     }
                 )
                 .id(model.importState.windowContentRevision)

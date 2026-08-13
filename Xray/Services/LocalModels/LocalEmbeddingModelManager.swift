@@ -58,12 +58,7 @@ enum LocalModelDownloadState: Equatable {
 
 enum LocalEmbeddingModelStore {
     static func modelsDirectory() -> URL {
-        let applicationSupport = FileManager.default.urls(
-            for: .applicationSupportDirectory,
-            in: .userDomainMask
-        ).first!
-        return applicationSupport
-            .appendingPathComponent("Xray", isDirectory: true)
+        try! XrayStorage.applicationSupportDirectory()
             .appendingPathComponent("Models", isDirectory: true)
     }
 

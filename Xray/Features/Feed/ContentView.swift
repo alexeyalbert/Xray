@@ -14,11 +14,13 @@ struct ContentView: View {
     private static let searchResultsBookmarkOrderDefaultsKey = "Search.ResultsUseBookmarkOrder"
     
     @Bindable var importState: ImportState
+    let appUpdateController: AppUpdateController
     @Binding var isShowingSettings: Bool
     let onRebuildDatabaseSchema: () -> Void
     let onResetDatabase: () -> Void
     let onGenerateRemainingEnrichments: () -> Void
     let onRefreshEnrichmentAvailability: () -> Void
+    let onPrepareForUpdate: () -> Void
     @Environment(\.colorScheme) private var colorScheme
     
     @State private var searchText: String = ""
@@ -227,6 +229,9 @@ struct ContentView: View {
                     searchDotCount = (searchDotCount + 1) % 4
                 }
             }
+            .task {
+                await appUpdateController.checkForUpdates()
+            }
             .sheet(isPresented: $isShowingSettings) {
                 SettingsView(
                     importState: importState,
@@ -356,6 +361,14 @@ struct ContentView: View {
                         }
                         .help(debouncedSearchText.isEmpty ? "Import & Database Status" : "Current Search Details")
                     }
+
+                    AppUpdateToolbarButton(
+                        controller: appUpdateController,
+                        isInstallationAllowed: !importState.isDatabaseImporting
+                            && !importState.isEnrichmentQueueRunning
+                            && !isEnrichmentRunning,
+                        onPrepareForInstallation: prepareForUpdateInstallation
+                    )
                 }
             }
             //            .toolbar {
@@ -381,6 +394,14 @@ struct ContentView: View {
         )
         .frame(width: debouncedSearchText.isEmpty ? 360 : 500)
         .frame(maxHeight: 680)
+    }
+
+    private func prepareForUpdateInstallation() {
+#if os(macOS)
+        closeSearchPanel()
+#endif
+        endSearch(clearSearchText: false, resetScroll: false)
+        onPrepareForUpdate()
     }
 
 #if os(macOS)
