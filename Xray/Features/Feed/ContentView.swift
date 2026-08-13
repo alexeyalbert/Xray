@@ -307,6 +307,8 @@ struct ContentView: View {
                             Image(systemName: "sparkles.rectangle.stack")
                                 .foregroundStyle(importState.isEnrichmentQueueRunning ? Color.accentColor : Color.secondary)
                         }
+                        .legacyToolbarCircleButton()
+                        .pointingHandOnHover()
                         .disabled(
                             importState.isDatabaseImporting
                                 || importState.isEnrichmentQueueRunning
@@ -316,47 +318,87 @@ struct ContentView: View {
                     }
                 }
 
-                ToolbarItem(placement: .principal) {
-                    SearchToolbarField(
-                        searchText: $searchText,
-                        selection: $searchSelection,
-                        focused: $isSearchFieldFocused,
-                        imageSearchMedia: similarImageSearchMedia,
-                        isPanelActive: isSearchPanelActive,
-                        onClearImageSearch: clearSimilarImageSearch,
-                        onEscape: { closeSearchPanel() },
-                        onSubmit: { closeSearchPanel(keepSearchFocus: true) }
-                    )
-                }
-
                 if #available(macOS 26.0, *) {
-                    ToolbarSpacer(.fixed, placement: .principal)
-                } else {
                     ToolbarItem(placement: .principal) {
-                        Color.clear
-                            .frame(width: 8, height: 1)
-                            .accessibilityHidden(true)
+                        SearchToolbarField(
+                            searchText: $searchText,
+                            selection: $searchSelection,
+                            focused: $isSearchFieldFocused,
+                            imageSearchMedia: similarImageSearchMedia,
+                            isPanelActive: isSearchPanelActive,
+                            onClearTextSearch: clearTextSearch,
+                            onClearImageSearch: clearSimilarImageSearch,
+                            onEscape: { closeSearchPanel() },
+                            onSubmit: { closeSearchPanel(keepSearchFocus: true) },
+                            onAnchorMinXChange: updateSearchPanelAnchor
+                        )
                     }
-                }
 
-                ToolbarItem(placement: .principal) {
-                    Button {
-                        toggleSearchPanel()
-                    } label: {
-                        Image(systemName: "slider.horizontal.3")
-                            .foregroundStyle(isSearchPanelActive ? Color.accentColor : Color.secondary)
-                    }
-                    .help("Search Operators & Embedding Threshold")
-                }
+                    ToolbarSpacer(.fixed, placement: .principal)
 
-                ToolbarItem(placement: .principal) {
-                    Button {
-                        searchResultsUseBookmarkOrder.toggle()
-                    } label: {
-                        Image(systemName: searchResultsUseBookmarkOrder ? "bookmark.fill" : "sparkle.magnifyingglass")
-                            .foregroundStyle(searchResultsUseBookmarkOrder ? Color.accentColor : Color.secondary)
+                    ToolbarItem(placement: .principal) {
+                        Button {
+                            toggleSearchPanel()
+                        } label: {
+                            Image(systemName: "slider.horizontal.3")
+                                .foregroundStyle(isSearchPanelActive ? Color.accentColor : Color.secondary)
+                        }
+                        .legacyToolbarCircleButton()
+                        .pointingHandOnHover()
+                        .help("Search Operators & Embedding Threshold")
                     }
-                    .help(searchResultsUseBookmarkOrder ? "Search Results: Bookmark Order" : "Search Results: Hybrid Rank")
+
+                    ToolbarItem(placement: .principal) {
+                        Button {
+                            searchResultsUseBookmarkOrder.toggle()
+                        } label: {
+                            Image(systemName: searchResultsUseBookmarkOrder ? "bookmark.fill" : "sparkle.magnifyingglass")
+                                .foregroundStyle(searchResultsUseBookmarkOrder ? Color.accentColor : Color.secondary)
+                        }
+                        .legacyToolbarCircleButton()
+                        .pointingHandOnHover()
+                        .help(searchResultsUseBookmarkOrder ? "Search Results: Bookmark Order" : "Search Results: Hybrid Rank")
+                    }
+                } else {
+                    // Before macOS 26, separate principal items are distributed across the
+                    // titlebar instead of forming one visual cluster. Keep the related search
+                    // controls in a single toolbar item so their spacing remains deterministic.
+                    ToolbarItem(placement: .principal) {
+                        HStack(spacing: 8) {
+                            SearchToolbarField(
+                                searchText: $searchText,
+                                selection: $searchSelection,
+                                focused: $isSearchFieldFocused,
+                                imageSearchMedia: similarImageSearchMedia,
+                                isPanelActive: isSearchPanelActive,
+                                onClearTextSearch: clearTextSearch,
+                                onClearImageSearch: clearSimilarImageSearch,
+                                onEscape: { closeSearchPanel() },
+                                onSubmit: { closeSearchPanel(keepSearchFocus: true) },
+                                onAnchorMinXChange: updateSearchPanelAnchor
+                            )
+
+                            Button {
+                                toggleSearchPanel()
+                            } label: {
+                                Image(systemName: "slider.horizontal.3")
+                                    .foregroundStyle(isSearchPanelActive ? Color.accentColor : Color.secondary)
+                            }
+                            .legacyToolbarCircleButton()
+                            .pointingHandOnHover()
+                            .help("Search Operators & Embedding Threshold")
+
+                            Button {
+                                searchResultsUseBookmarkOrder.toggle()
+                            } label: {
+                                Image(systemName: searchResultsUseBookmarkOrder ? "bookmark.fill" : "sparkle.magnifyingglass")
+                                    .foregroundStyle(searchResultsUseBookmarkOrder ? Color.accentColor : Color.secondary)
+                            }
+                            .legacyToolbarCircleButton()
+                            .pointingHandOnHover()
+                            .help(searchResultsUseBookmarkOrder ? "Search Results: Bookmark Order" : "Search Results: Hybrid Rank")
+                        }
+                    }
                 }
 #endif
                 ToolbarItemGroup(placement: .primaryAction) {
@@ -366,6 +408,8 @@ struct ContentView: View {
                         } label: {
                             Image(systemName: "info.circle")
                         }
+                        .legacyToolbarCircleButton()
+                        .pointingHandOnHover()
                         .popover(isPresented: $showImportStatusPopover) {
                             infoPopoverContent
                         }
@@ -447,9 +491,6 @@ struct ContentView: View {
                 }
             }
             .zIndex(8)
-            .onAppear {
-                updateSearchPanelAnchor()
-            }
         }
     }
 
@@ -458,7 +499,6 @@ struct ContentView: View {
     }
 
     private func presentSearchPanel(focusSearchField shouldFocusSearchField: Bool) {
-        updateSearchPanelAnchor()
         withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) {
             isSearchPanelActive = true
         }
@@ -494,7 +534,6 @@ struct ContentView: View {
             for root in roots {
                 if let field = Self.searchTextField(in: root) {
                     window.makeFirstResponder(field)
-                    updateSearchPanelAnchor()
                     return
                 }
             }
@@ -508,23 +547,9 @@ struct ContentView: View {
         return min(max(searchPanelMinX, 0), maxMinX)
     }
 
-    private func updateSearchPanelAnchor() {
-        DispatchQueue.main.async {
-            guard let window = NSApp.keyWindow
-                ?? NSApp.mainWindow
-                ?? NSApp.windows.first(where: { $0.isVisible }),
-                  let contentView = window.contentView else { return }
-
-            let roots = [contentView.superview, contentView].compactMap { $0 }
-            for root in roots {
-                guard let field = Self.searchTextField(in: root) else { continue }
-                let contentFrameInWindow = contentView.convert(contentView.bounds, to: nil)
-                let anchorView = Self.searchToolbarContainer(for: field) ?? field
-                let anchorFrameInWindow = anchorView.convert(anchorView.bounds, to: nil)
-                searchPanelMinX = anchorFrameInWindow.minX - contentFrameInWindow.minX
-                return
-            }
-        }
+    private func updateSearchPanelAnchor(_ minX: CGFloat) {
+        guard abs((searchPanelMinX ?? minX) - minX) > 0.5 || searchPanelMinX == nil else { return }
+        searchPanelMinX = minX
     }
 
     private static func searchTextField(in view: NSView) -> NSTextField? {
@@ -537,21 +562,6 @@ struct ContentView: View {
             }
         }
         return nil
-    }
-
-    private static func searchToolbarContainer(for field: NSTextField) -> NSView? {
-        var candidate: NSView? = field
-        var bestMatch: NSView?
-        let tolerance: CGFloat = 0.5
-
-        while let view = candidate {
-            if abs(view.bounds.width - SearchToolbarField.controlWidth) <= tolerance {
-                bestMatch = view
-            }
-            candidate = view.superview
-        }
-
-        return bestMatch
     }
 
     private func toggleSearchPanel() {
@@ -595,7 +605,7 @@ struct ContentView: View {
         }
         suppressSearchPanelForNextTextChange = true
 #endif
-        searchText = query
+        replaceSearchText(with: query)
     }
 
     private func runSearch(for value: String) {
@@ -683,7 +693,7 @@ struct ContentView: View {
         let searchID = UUID()
         activeSearchID = searchID
         similarImageSearchMedia = media
-        searchText = ""
+        replaceSearchText(with: "")
         debouncedSearchText = ""
         let pendingResourceRelease = searchResourceReleaseTask
         searchResourceReleaseTask = nil
@@ -736,6 +746,26 @@ struct ContentView: View {
         endSearch(clearSearchText: true)
     }
 
+    private func clearTextSearch() {
+        replaceSearchText(with: "")
+
+#if os(macOS)
+        // Let SwiftUI commit the nil selection and empty text together before
+        // asking AppKit to restore focus on macOS 15.
+        DispatchQueue.main.async {
+            focusSearchField()
+        }
+#endif
+    }
+
+    private func replaceSearchText(with value: String) {
+        // TextSelection stores String.Index values tied to the current string.
+        // Invalidate it before replacing or shrinking that string so older
+        // SwiftUI releases never process an out-of-bounds selection.
+        searchSelection = nil
+        searchText = value
+    }
+
     private func endSearch(clearSearchText: Bool, resetScroll: Bool = true) {
         let thumbnailURLs = searchResults.flatMap(\.thumbnailCacheURLs)
 
@@ -745,8 +775,8 @@ struct ContentView: View {
         searchTask = nil
         activeSearchID = nil
 
-        if clearSearchText, !searchText.isEmpty {
-            searchText = ""
+        if clearSearchText {
+            replaceSearchText(with: "")
         }
         debouncedSearchText = ""
         similarImageSearchMedia = nil

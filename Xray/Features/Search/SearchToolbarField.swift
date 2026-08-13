@@ -18,9 +18,11 @@ struct SearchToolbarField: View {
     var focused: FocusState<Bool>.Binding
     let imageSearchMedia: Media?
     var isPanelActive: Bool
+    var onClearTextSearch: () -> Void
     var onClearImageSearch: () -> Void
     var onEscape: () -> Void
     var onSubmit: () -> Void
+    var onAnchorMinXChange: (CGFloat) -> Void
 
     var body: some View {
         HStack(spacing: 7) {
@@ -62,10 +64,7 @@ struct SearchToolbarField: View {
                 .help("Clear Image Search")
                 .pointingHandOnHover()
             } else if !searchText.isEmpty {
-                Button {
-                    searchText = ""
-                    focused.wrappedValue = true
-                } label: {
+                Button(action: onClearTextSearch) {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundStyle(.tertiary)
                 }
@@ -76,7 +75,87 @@ struct SearchToolbarField: View {
         .padding(.leading, 10)
         .padding(.trailing, searchText.isEmpty && imageSearchMedia == nil ? 10 : 8)
         .frame(width: Self.controlWidth)
+        .legacyToolbarSearchFieldChrome()
+        .background {
+            SearchToolbarAnchorReader(onMinXChange: onAnchorMinXChange)
+        }
         .animation(.spring(response: 0.24, dampingFraction: 0.86), value: imageSearchMedia?.id)
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func legacyToolbarSearchFieldChrome() -> some View {
+        if #available(macOS 26.0, *) {
+            self
+        } else {
+            self
+                .padding(.vertical, 5)
+                .background(Color(nsColor: .controlBackgroundColor).opacity(0.94), in: Capsule())
+                .overlay {
+                    Capsule()
+                        .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5)
+                }
+        }
+    }
+}
+
+private struct SearchToolbarAnchorReader: NSViewRepresentable {
+    let onMinXChange: (CGFloat) -> Void
+
+    func makeNSView(context: Context) -> SearchToolbarAnchorView {
+        let view = SearchToolbarAnchorView()
+        view.onMinXChange = onMinXChange
+        return view
+    }
+
+    func updateNSView(_ nsView: SearchToolbarAnchorView, context: Context) {
+        nsView.onMinXChange = onMinXChange
+        nsView.scheduleFrameReport()
+    }
+}
+
+private final class SearchToolbarAnchorView: NSView {
+    var onMinXChange: ((CGFloat) -> Void)?
+
+    private var lastReportedMinX: CGFloat?
+    private var isFrameReportScheduled = false
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        scheduleFrameReport()
+    }
+
+    override func layout() {
+        super.layout()
+        scheduleFrameReport()
+    }
+
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        nil
+    }
+
+    func scheduleFrameReport() {
+        guard !isFrameReportScheduled else { return }
+        isFrameReportScheduled = true
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            isFrameReportScheduled = false
+            reportFrameIfNeeded()
+        }
+    }
+
+    private func reportFrameIfNeeded() {
+        guard let contentView = window?.contentView else { return }
+
+        let frameInWindow = convert(bounds, to: nil)
+        let contentFrameInWindow = contentView.convert(contentView.bounds, to: nil)
+        let minX = frameInWindow.minX - contentFrameInWindow.minX
+
+        guard lastReportedMinX.map({ abs($0 - minX) > 0.5 }) ?? true else { return }
+        lastReportedMinX = minX
+        onMinXChange?(minX)
     }
 }
 

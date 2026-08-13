@@ -60,6 +60,10 @@ struct SearchOperatorDropdown: View {
             text += searchOperator.insert
         }
 
+        // The current selection contains String.Index values from the old
+        // string. Clear it before replacing the text, then establish the new
+        // insertion point after SwiftUI has accepted the updated string.
+        selection = nil
         searchText = text
         onInsert()
 
