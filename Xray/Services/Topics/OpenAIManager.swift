@@ -163,19 +163,25 @@ enum OpenAIManager {
         guard !UserDefaults.standard.bool(forKey: separatedTopicAPIKeysMigrationKey) else {
             return
         }
-        defer { UserDefaults.standard.set(true, forKey: separatedTopicAPIKeysMigrationKey) }
 
-        guard
-            currentProvider == .openAICompatible,
-            apiKey(for: .openAICompatible) == nil,
-            let legacyKey = apiKey(for: .openrouter)
-        else {
-            return
+        // The previous shared `openai_api_key` account is now the OpenRouter slot.
+        // Users whose provider was OpenAI (including the old default) still have
+        // that credential there; copy it into the compatible-provider account and
+        // delete the original so it cannot later be sent to openrouter.ai.
+        if currentProvider == .openAICompatible,
+           apiKey(for: .openAICompatible) == nil,
+           let legacyKey = apiKey(for: .openrouter)
+        {
+            guard KeychainHelper.saveString(
+                legacyKey,
+                for: AppSecretsKey.openAICompatibleTopicAPIKey.rawValue
+            ) else {
+                return
+            }
+            _ = KeychainHelper.delete(for: AppSecretsKey.openRouterAPIKey.rawValue)
         }
-        _ = KeychainHelper.saveString(
-            legacyKey,
-            for: AppSecretsKey.openAICompatibleTopicAPIKey.rawValue
-        )
+
+        UserDefaults.standard.set(true, forKey: separatedTopicAPIKeysMigrationKey)
     }
 
     static var isTopicGenerationConfigured: Bool {
