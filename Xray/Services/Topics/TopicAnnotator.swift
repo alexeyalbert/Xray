@@ -465,10 +465,12 @@ enum TopicAnnotator {
     }
 
     private static func isPersistentTopicFailureCode(_ statusCode: Int) -> Bool {
-        // These request-level client errors can be content-specific and deterministic.
-        // Authentication, quota, model access, and server errors deliberately remain
-        // unresolved so a systemic configuration/outage cannot skip the whole archive.
-        statusCode == 400 || statusCode == 413 || statusCode == 422
+        // Payload-too-large and unprocessable-entity are typically content-specific.
+        // Generic 400 is not: a local OpenAI-compatible server that rejects a request
+        // field or multimodal shape would otherwise skip the entire archive.
+        // Authentication, quota, model access, and server errors also stay retryable
+        // so a systemic configuration/outage cannot mark every post as unavailable.
+        statusCode == 413 || statusCode == 422
     }
 
     private static func logRemoteResponseFailure(
