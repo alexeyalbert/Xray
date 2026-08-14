@@ -11,9 +11,9 @@ import SQLite
 
 actor SQLiteManager {
     static let minimumEmbeddingSimilarityDefaultsKey = "Search.MinimumEmbeddingSimilarity"
-    static let defaultMinimumEmbeddingSimilarity = 0.75
+    static let defaultMinimumEmbeddingSimilarity = 0.76
     static let minimumImageEmbeddingSimilarityDefaultsKey = "Search.MinimumImageEmbeddingSimilarity"
-    static let defaultMinimumImageEmbeddingSimilarity = 0.35
+    static let defaultMinimumImageEmbeddingSimilarity = 0.40
 
     private enum NullSearchField: String, Hashable, CaseIterable {
         case fullText
