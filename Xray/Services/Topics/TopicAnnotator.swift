@@ -464,13 +464,14 @@ enum TopicAnnotator {
             || (500...599).contains(statusCode)
     }
 
-    private static func isPersistentTopicFailureCode(_ statusCode: Int) -> Bool {
-        // Payload-too-large and unprocessable-entity are typically content-specific.
-        // Generic 400 is not: a local OpenAI-compatible server that rejects a request
-        // field or multimodal shape would otherwise skip the entire archive.
-        // Authentication, quota, model access, and server errors also stay retryable
-        // so a systemic configuration/outage cannot mark every post as unavailable.
-        statusCode == 413 || statusCode == 422
+    static func isPersistentTopicFailureCode(_ statusCode: Int) -> Bool {
+        // Payload-too-large is typically content-specific for this post.
+        // Generic 400/422 are not: OpenAI-compatible servers commonly use them
+        // for unsupported request fields or multimodal shapes, which would
+        // otherwise skip the entire archive. Authentication, quota, model
+        // access, and server errors also stay retryable so a systemic
+        // configuration/outage cannot mark every post as unavailable.
+        statusCode == 413
     }
 
     private static func logRemoteResponseFailure(

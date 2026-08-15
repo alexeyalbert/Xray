@@ -254,6 +254,18 @@ struct DomainModelTests {
         }
     }
 
+    @Test("Only content-specific HTTP failures are persisted as unavailable")
+    func persistentTopicFailuresStayContentSpecific() {
+        #expect(!TopicAnnotator.isPersistentTopicFailureCode(400))
+        #expect(!TopicAnnotator.isPersistentTopicFailureCode(401))
+        #expect(!TopicAnnotator.isPersistentTopicFailureCode(403))
+        #expect(!TopicAnnotator.isPersistentTopicFailureCode(404))
+        #expect(!TopicAnnotator.isPersistentTopicFailureCode(422))
+        #expect(!TopicAnnotator.isPersistentTopicFailureCode(429))
+        #expect(!TopicAnnotator.isPersistentTopicFailureCode(500))
+        #expect(TopicAnnotator.isPersistentTopicFailureCode(413))
+    }
+
     @Test("Concurrent topic requests determine persistence frequency for every provider")
     func topicPersistencePageSizes() {
         #expect(OpenAIManager.defaultTopicConcurrentRequests(for: .openrouter) == 100)
