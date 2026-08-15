@@ -21,7 +21,7 @@ struct ContentView: View {
     let onResetStoredTopics: () -> Void
     let onGenerateRemainingEnrichments: () -> Void
     let onRefreshEnrichmentAvailability: () -> Void
-    let onPrepareForUpdate: () -> Void
+    let onPrepareForUpdate: () async -> Void
     @Environment(\.colorScheme) private var colorScheme
     
     @State private var searchText: String = ""
@@ -312,7 +312,7 @@ struct ContentView: View {
                         .disabled(
                             importState.isDatabaseImporting
                                 || importState.isEnrichmentQueueRunning
-                                || (importState.browserImportActiveSessionID != nil && !importState.browserImportCompleted)
+                                || importState.isBrowserImportInProgress
                         )
                         .help(importState.isEnrichmentQueueRunning ? "Generating Remaining Topics & Embeddings" : "Generate Remaining Topics & Embeddings")
                     }
@@ -420,7 +420,8 @@ struct ContentView: View {
                         controller: appUpdateController,
                         isInstallationAllowed: !importState.isDatabaseImporting
                             && !importState.isEnrichmentQueueRunning
-                            && !isEnrichmentRunning,
+                            && !isEnrichmentRunning
+                            && !importState.isBrowserImportInProgress,
                         onPrepareForInstallation: prepareForUpdateInstallation
                     )
                 }
@@ -455,12 +456,12 @@ struct ContentView: View {
         .frame(maxHeight: 680)
     }
 
-    private func prepareForUpdateInstallation() {
+    private func prepareForUpdateInstallation() async {
 #if os(macOS)
         closeSearchPanel()
 #endif
         endSearch(clearSearchText: false, resetScroll: false)
-        onPrepareForUpdate()
+        await onPrepareForUpdate()
     }
 
 #if os(macOS)

@@ -13,6 +13,7 @@ final class BrowserImportReceiver {
 
     private var listener: NWListener?
     private var activeConnections: [UUID: HTTPConnectionHandler] = [:]
+    private var handlersPendingDrain: [HTTPConnectionHandler] = []
     private var isStopped = true
 
     init(token: String, batchHandler: @escaping BatchHandler, snapshotHandler: @escaping SnapshotHandler) {
@@ -70,26 +71,47 @@ final class BrowserImportReceiver {
     }
 
     func stop() {
-        lifecycleLock.lock()
-        guard !isStopped else {
-            lifecycleLock.unlock()
-            return
-        }
-        isStopped = true
-        let listenerToCancel = listener
-        listener = nil
-        let connectionsToCancel = Array(activeConnections.values)
-        activeConnections.removeAll()
-        lifecycleLock.unlock()
+        cancelListenerAndConnections()
+    }
 
-        listenerToCancel?.cancel()
-        for connection in connectionsToCancel {
-            connection.cancel()
+    func stopAndDrain() async {
+        let handlers = takeHandlersToDrain()
+        for handler in handlers {
+            await handler.waitForRequestIfNeeded()
         }
     }
 
     func currentToken() -> String {
         token
+    }
+
+    private func takeHandlersToDrain() -> [HTTPConnectionHandler] {
+        cancelListenerAndConnections()
+        lifecycleLock.lock()
+        defer { lifecycleLock.unlock() }
+        let handlers = handlersPendingDrain
+        handlersPendingDrain.removeAll()
+        return handlers
+    }
+
+    private func cancelListenerAndConnections() {
+        lifecycleLock.lock()
+        if !isStopped {
+            isStopped = true
+            let listenerToCancel = listener
+            listener = nil
+            let connectionsToCancel = Array(activeConnections.values)
+            activeConnections.removeAll()
+            handlersPendingDrain.append(contentsOf: connectionsToCancel)
+            lifecycleLock.unlock()
+
+            listenerToCancel?.cancel()
+            for connection in connectionsToCancel {
+                connection.cancel()
+            }
+            return
+        }
+        lifecycleLock.unlock()
     }
 
     private func activateConnection(_ handler: HTTPConnectionHandler) -> Bool {

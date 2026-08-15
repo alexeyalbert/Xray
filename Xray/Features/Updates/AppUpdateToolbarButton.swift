@@ -4,7 +4,7 @@ import SwiftUI
 struct AppUpdateToolbarButton: View {
     let controller: AppUpdateController
     let isInstallationAllowed: Bool
-    let onPrepareForInstallation: () -> Void
+    let onPrepareForInstallation: () async -> Void
 
     var body: some View {
         if let version = controller.availableVersion {
@@ -35,7 +35,7 @@ struct AppUpdateToolbarButton: View {
     private func installUpdate(version: String) {
         Task {
             await controller.installAvailableUpdate {
-                onPrepareForInstallation()
+                await onPrepareForInstallation()
             }
 
             if controller.errorMessage != nil {

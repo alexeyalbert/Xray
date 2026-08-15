@@ -5,6 +5,7 @@ import SwiftUI
 final class AppModel {
     let importState = ImportState()
     var browserImportReceiver: BrowserImportReceiver?
+    @ObservationIgnored var browserImportShutdownTask: Task<Void, Never>?
 
     init() {
         // Expand the shared URL cache to reduce redundant image fetches

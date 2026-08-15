@@ -68,6 +68,12 @@ class ImportState {
     var browserImportInsertedCount: Int = 0
     var browserImportSkippedExistingCount: Int = 0
     var browserImportCompleted: Bool = false
+    var isBrowserImportDraining: Bool = false
+
+    var isBrowserImportInProgress: Bool {
+        isBrowserImportDraining
+            || (browserImportActiveSessionID != nil && !browserImportCompleted)
+    }
 
     // Search mode selection for menu commands
     var searchMode: SearchMode = .hybrid

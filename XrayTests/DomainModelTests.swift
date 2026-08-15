@@ -308,6 +308,21 @@ struct DomainModelTests {
         #expect(unorderedColumns[SQLitePostRowDecoder.Layout.withoutBookmarkOrdering.links] == "links")
     }
 
+    @Test("Incomplete browser import sessions block app updates")
+    func incompleteBrowserImportBlocksAppUpdates() {
+        let state = ImportState()
+        #expect(!state.isBrowserImportInProgress)
+
+        state.browserImportActiveSessionID = "session-1"
+        #expect(state.isBrowserImportInProgress)
+
+        state.browserImportCompleted = true
+        #expect(!state.isBrowserImportInProgress)
+
+        state.isBrowserImportDraining = true
+        #expect(state.isBrowserImportInProgress)
+    }
+
     private func projectionColumns(_ projection: String) -> [String] {
         projection
             .split(separator: ",")

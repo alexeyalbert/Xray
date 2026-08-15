@@ -45,9 +45,7 @@ struct XrayApp: App {
                         Task { await model.refreshPendingEnrichmentWork() }
                     },
                     onPrepareForUpdate: {
-                        if model.importState.isBrowserImportReceiverRunning {
-                            model.endBrowserImportReceiver()
-                        }
+                        await model.endBrowserImportReceiver()
                     }
                 )
                 .id(model.importState.windowContentRevision)
