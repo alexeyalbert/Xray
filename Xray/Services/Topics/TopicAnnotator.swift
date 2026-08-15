@@ -368,10 +368,10 @@ enum TopicAnnotator {
                 if let providerError = providerError(from: responseData) {
                     let codeDescription = providerError.code.map(String.init) ?? "unknown"
                     logger.error(
-                        "[\(providerLabel, privacy: .public)] Provider rejected topic request post=\(post.id) code=\(codeDescription, privacy: .public) message=\(providerError.message, privacy: .public)"
+                        "[\(providerLabel, privacy: .public)] Provider rejected topic request post=\(post.id) code=\(codeDescription, privacy: .public) message=\(providerError.message, privacy: .private)"
                     )
                     logRemoteResponseFailure(
-                        "Provider returned an error envelope (code: \(codeDescription), message: \(providerError.message))",
+                        "Provider returned an error envelope (code: \(codeDescription))",
                         provider: providerLabel,
                         postID: post.id,
                         attempt: attempt,
@@ -394,8 +394,11 @@ enum TopicAnnotator {
                 do {
                     decoded = try JSONDecoder().decode(ChatCompletionResponse.self, from: responseData)
                 } catch {
+                    #if DEBUG
+                    logger.debug("[\(providerLabel, privacy: .public)] Failed to decode response envelope: \(String(describing: error), privacy: .public)")
+                    #endif
                     logRemoteResponseFailure(
-                        "Failed to decode response envelope: \(String(describing: error))",
+                        "Failed to decode response envelope",
                         provider: providerLabel,
                         postID: post.id,
                         attempt: attempt,
@@ -482,6 +485,32 @@ enum TopicAnnotator {
         response: URLResponse,
         data: Data
     ) {
+        let status = (response as? HTTPURLResponse).map { String($0.statusCode) } ?? "non-HTTP"
+        logger.error(
+            "[\(provider, privacy: .public)] Topic request failed post=\(postID) attempt=\(attempt) status=\(status, privacy: .public) bytes=\(data.count) reason=\(reason, privacy: .public)"
+        )
+
+        #if DEBUG
+        logVerboseRemoteResponseFailure(
+            reason,
+            provider: provider,
+            postID: postID,
+            attempt: attempt,
+            response: response,
+            data: data
+        )
+        #endif
+    }
+
+    #if DEBUG
+    private static func logVerboseRemoteResponseFailure(
+        _ reason: String,
+        provider: String,
+        postID: Int,
+        attempt: Int,
+        response: URLResponse,
+        data: Data
+    ) {
         let responseType = String(describing: type(of: response))
         let url = response.url?.absoluteString ?? "<none>"
         let mimeType = response.mimeType ?? "<none>"
@@ -538,6 +567,7 @@ enum TopicAnnotator {
             )
         }
     }
+    #endif
 
     private static func compressedImageDataURL(from url: URL) async -> String? {
         guard let dataURL = await MediaImageProcessor.processedImageDataURL(from: url) else {
@@ -589,6 +619,7 @@ enum TopicAnnotator {
 
 }
 
+#if DEBUG
 private extension String {
     func chunked(maxCharacterCount: Int) -> [String] {
         guard !isEmpty else { return [""] }
@@ -602,3 +633,4 @@ private extension String {
         return chunks
     }
 }
+#endif
