@@ -168,4 +168,42 @@ extension AppModel {
         }
         await refreshPendingEnrichmentWork()
     }
+
+    func resetStoredTopicsAndUI() async {
+        guard !importState.isDatabaseImporting,
+              !importState.isEnrichmentQueueRunning,
+              !importState.isTopicAnnotating else {
+            return
+        }
+
+        await MainActor.run {
+            importState.isDatabaseImporting = true
+            importState.databaseImportStatus = "Resetting stored topics..."
+            importState.databaseImportProgress = 0
+            importState.databaseImportError = nil
+            importState.databaseImportCompleted = false
+        }
+
+        do {
+            let postCount = try await sqliteManager.clearAllTopics()
+            TopicAnnotator.clearCache()
+            let loadedPostCount = await MainActor.run { importState.posts?.count ?? 0 }
+            await refreshVisiblePostsFromDatabase(pageSize: max(100, loadedPostCount))
+
+            await MainActor.run {
+                importState.windowContentRevision &+= 1
+                importState.isDatabaseImporting = false
+                importState.databaseImportCompleted = true
+                importState.databaseImportProgress = 1
+                importState.databaseImportStatus = "Stored topics reset for \(postCount) posts."
+            }
+        } catch {
+            await MainActor.run {
+                importState.isDatabaseImporting = false
+                importState.databaseImportError = "Topic reset failed: \(error.localizedDescription)"
+            }
+        }
+
+        await refreshPendingEnrichmentWork()
+    }
 }

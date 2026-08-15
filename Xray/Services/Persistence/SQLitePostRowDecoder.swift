@@ -26,6 +26,7 @@ nonisolated struct SQLitePostRowDecoder {
         let bookmarkImportGeneration: Int?
         let bookmarkOrder: Int?
         let links: Int
+        let topicAnnotationFailed: Int?
 
         static let standard = Layout(
             id: 0,
@@ -46,7 +47,8 @@ nonisolated struct SQLitePostRowDecoder {
             imageEmbedding: nil,
             bookmarkImportGeneration: 13,
             bookmarkOrder: 14,
-            links: 15
+            links: 15,
+            topicAnnotationFailed: nil
         )
 
         static let schemaRebuild = Layout(
@@ -68,7 +70,8 @@ nonisolated struct SQLitePostRowDecoder {
             imageEmbedding: 15,
             bookmarkImportGeneration: 16,
             bookmarkOrder: 17,
-            links: 18
+            links: 18,
+            topicAnnotationFailed: 19
         )
 
         static let withoutBookmarkOrdering = Layout(
@@ -90,13 +93,15 @@ nonisolated struct SQLitePostRowDecoder {
             imageEmbedding: nil,
             bookmarkImportGeneration: nil,
             bookmarkOrder: nil,
-            links: 13
+            links: 13,
+            topicAnnotationFailed: nil
         )
     }
 
     struct DecodedPost {
         let post: Post
         let normalizedTextEmbedding: [Float]
+        let topicAnnotationFailed: Bool
     }
 
     static let standardProjection = """
@@ -107,7 +112,7 @@ nonisolated struct SQLitePostRowDecoder {
     static let schemaRebuildProjection = """
     id, created_at, full_text, media, article, screen_name, name, profile_image_url, profile_image_shape, url,
            primary_topic, secondary_topics, quoted_post, text_embedding, text_embedding_normalized, img_embedding,
-           bookmark_import_generation, bookmark_order, links
+           bookmark_import_generation, bookmark_order, links, topic_annotation_failed
     """
 
     static let projectionWithoutBookmarkOrdering = """
@@ -141,7 +146,14 @@ nonisolated struct SQLitePostRowDecoder {
             bookmark_order: layout.bookmarkOrder.flatMap { int(from: row[$0]) }
         )
 
-        return DecodedPost(post: post, normalizedTextEmbedding: normalizedTextEmbedding)
+        let topicAnnotationFailed = layout.topicAnnotationFailed
+            .flatMap { int(from: row[$0]) }
+            .map { $0 != 0 } ?? false
+        return DecodedPost(
+            post: post,
+            normalizedTextEmbedding: normalizedTextEmbedding,
+            topicAnnotationFailed: topicAnnotationFailed
+        )
     }
 
     private func decodeJSON<Value: Decodable>(_ text: String?, as type: Value.Type) -> Value? {

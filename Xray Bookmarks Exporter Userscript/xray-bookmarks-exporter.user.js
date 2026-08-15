@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         Xray Bookmarks Exporter
-// @namespace    https://alexeyalbert.com/xray
-// @version      0.4.1
+// @namespace    https://github.com/alexeyalbert/Xray
+// @version      0.4.2
 // @description  Capture X bookmarks in your normal browser session and stream or export them in Xray's import format.
 // @author       Xray
 // @license      MIT
 // @match        https://x.com/i/bookmarks*
 // @match        https://twitter.com/i/bookmarks*
+// @match        https://x.com/i/history*
 // @run-at       document-start
 // @inject-into  auto
 // @grant        GM_xmlhttpRequest

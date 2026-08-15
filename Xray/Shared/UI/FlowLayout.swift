@@ -1,10 +1,11 @@
 import SwiftUI
 
-/// A simple flow layout that places subviews horizontally and wraps to the next line when needed.
-/// Useful for tag/chip layouts that should wrap vertically without breaking words.
+/// A flow layout that places subviews horizontally and wraps to the next line when needed.
+/// Oversized subviews can optionally be constrained so their content wraps within the layout.
 struct FlowLayout: Layout {
     var spacing: CGFloat = 8
     var rowSpacing: CGFloat = 8
+    var constrainOversizedSubviews = false
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let maxWidth = proposal.width ?? .infinity
@@ -15,7 +16,7 @@ struct FlowLayout: Layout {
         var measuredMaxRowWidth: CGFloat = 0
 
         for subview in subviews {
-            let subviewSize = subview.sizeThatFits(.unspecified)
+            let subviewSize = size(for: subview, constrainedTo: maxWidth)
 
             if currentRowWidth > 0 && currentRowWidth + spacing + subviewSize.width > maxWidth {
                 // Wrap to next line
@@ -43,7 +44,7 @@ struct FlowLayout: Layout {
         var currentRowHeight: CGFloat = 0
 
         for subview in subviews {
-            let subviewSize = subview.sizeThatFits(.unspecified)
+            let subviewSize = size(for: subview, constrainedTo: maxWidth)
             let requiredWidth = (cursor.x > bounds.minX ? spacing : 0) + subviewSize.width
 
             if cursor.x + requiredWidth > bounds.minX + maxWidth {
@@ -59,6 +60,18 @@ struct FlowLayout: Layout {
             currentRowHeight = max(currentRowHeight, subviewSize.height)
         }
     }
+
+    private func size(for subview: LayoutSubview, constrainedTo maxWidth: CGFloat) -> CGSize {
+        let idealSize = subview.sizeThatFits(.unspecified)
+        guard constrainOversizedSubviews,
+              maxWidth.isFinite,
+              maxWidth > 0,
+              idealSize.width > maxWidth else {
+            return idealSize
+        }
+
+        return subview.sizeThatFits(
+            ProposedViewSize(width: maxWidth, height: nil)
+        )
+    }
 }
-
-

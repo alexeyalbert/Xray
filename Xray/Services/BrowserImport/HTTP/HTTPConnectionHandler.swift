@@ -11,6 +11,7 @@ final class HTTPConnectionHandler {
     private var buffer = Data()
     private var didHandleRequest = false
     private var didFinish = false
+    private var requestTask: Task<Void, Never>?
 
     init(
         connection: NWConnection,
@@ -64,11 +65,7 @@ final class HTTPConnectionHandler {
             }
 
             if let request = self.parseRequestIfComplete() {
-                self.didHandleRequest = true
-                Task {
-                    let response = await self.requestHandler(request)
-                    self.sendResponse(response)
-                }
+                self.startRequestTask(for: request)
                 return
             }
 
@@ -154,6 +151,27 @@ final class HTTPConnectionHandler {
 
     func cancel() {
         finish()
+    }
+
+    func waitForRequestIfNeeded() async {
+        await requestTaskSnapshot()?.value
+    }
+
+    private func requestTaskSnapshot() -> Task<Void, Never>? {
+        finishLock.lock()
+        defer { finishLock.unlock() }
+        return requestTask
+    }
+
+    private func startRequestTask(for request: HTTPRequest) {
+        finishLock.lock()
+        defer { finishLock.unlock() }
+        guard !didFinish, !didHandleRequest else { return }
+        didHandleRequest = true
+        requestTask = Task { [self] in
+            let response = await self.requestHandler(request)
+            self.sendResponse(response)
+        }
     }
 
     private func finish() {

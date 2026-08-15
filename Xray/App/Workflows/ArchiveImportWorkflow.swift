@@ -17,12 +17,13 @@ extension AppModel {
 
     // Annotate posts with topics before saving using helper
     private func annotatePostsWithTopics(_ posts: [Post]) async -> [Post] {
-        await TopicAnnotator.annotatePostsWithTopics(posts) { [self] current, total in
+        let result = await TopicAnnotator.annotatePostsWithTopics(posts) { [self] current, total in
             Task { @MainActor in
                 importState.databaseImportStatus = "Annotating topics (\(current)/\(total))..."
                 importState.databaseImportProgress = Double(current) / Double(max(total, 1))
             }
         }
+        return result.posts
     }
 
     private func loadArchiveForSoftImport(from url: URL) {

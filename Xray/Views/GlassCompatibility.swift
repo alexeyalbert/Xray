@@ -17,6 +17,15 @@ extension View {
     }
 
     @ViewBuilder
+    func legacyToolbarCircleButton() -> some View {
+        if #available(macOS 26.0, *) {
+            self
+        } else {
+            self.buttonStyle(LegacyToolbarCircleButtonStyle())
+        }
+    }
+
+    @ViewBuilder
     func compatibleGlassCapsule() -> some View {
         if #available(macOS 26.0, *) {
             self.glassEffect()
@@ -52,6 +61,21 @@ private struct LegacyGlassCircleButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .padding(4)
+            .background(Color(nsColor: .controlBackgroundColor).opacity(0.94), in: Circle())
+            .overlay {
+                Circle()
+                    .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5)
+            }
+            .contentShape(Circle())
+            .opacity(configuration.isPressed ? 0.7 : 1)
+            .scaleEffect(configuration.isPressed ? 0.96 : 1)
+    }
+}
+
+private struct LegacyToolbarCircleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .frame(width: 28, height: 28)
             .background(Color(nsColor: .controlBackgroundColor).opacity(0.94), in: Circle())
             .overlay {
                 Circle()

@@ -42,7 +42,7 @@ struct XrayCommands: Commands {
             .disabled(importState.isBrowserImportReceiverRunning)
 
             Button("Stop Browser Import Receiver", systemImage: "stop.circle") {
-                model.endBrowserImportReceiver()
+                Task { await model.endBrowserImportReceiver() }
             }
             .disabled(!importState.isBrowserImportReceiverRunning)
 

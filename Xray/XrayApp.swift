@@ -3,8 +3,14 @@ import SwiftUI
 @main
 struct XrayApp: App {
     @State private var model = AppModel()
+    @State private var appUpdateController = AppUpdateController()
     @State private var isShowingSettings = false
-    @State private var isShowingOnboarding = !OnboardingSettings.hasCompleted
+    @State private var isShowingOnboarding: Bool
+
+    init() {
+        XrayStorage.migrateLegacySandboxDefaultsIfNeeded()
+        _isShowingOnboarding = State(initialValue: !OnboardingSettings.hasCompleted)
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -19,12 +25,16 @@ struct XrayApp: App {
             } else {
                 ContentView(
                     importState: model.importState,
+                    appUpdateController: appUpdateController,
                     isShowingSettings: $isShowingSettings,
                     onRebuildDatabaseSchema: {
                         Task { await model.rebuildDatabaseSchemaPreservingData() }
                     },
                     onResetDatabase: {
                         Task { await model.resetDatabaseAndUI() }
+                    },
+                    onResetStoredTopics: {
+                        Task { await model.resetStoredTopicsAndUI() }
                     },
                     onGenerateRemainingEnrichments: {
                         Task.detached(priority: .userInitiated) {
@@ -33,10 +43,20 @@ struct XrayApp: App {
                     },
                     onRefreshEnrichmentAvailability: {
                         Task { await model.refreshPendingEnrichmentWork() }
+                    },
+                    onPrepareForUpdate: {
+                        await model.endBrowserImportReceiver()
                     }
                 )
+                .id(model.importState.windowContentRevision)
                 .frame(minWidth: 1050, minHeight: 600)
-                .onAppear { model.loadInitialPostsFromDatabase() }
+                .onAppear {
+                    guard model.importState.posts == nil else { return }
+                    model.loadInitialPostsFromDatabase()
+                }
+                .background {
+                    MainWindowTint()
+                }
                 .containerBackground(.regularMaterial, for: .window)
             }
         }
@@ -52,5 +72,15 @@ struct XrayApp: App {
         .windowStyle(.hiddenTitleBar)
         .windowToolbarStyle(.unified)
 #endif
+    }
+}
+
+private struct MainWindowTint: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Color(.white)
+            .opacity(colorScheme == .dark ? 0.04 : 0)
+            .ignoresSafeArea()
     }
 }

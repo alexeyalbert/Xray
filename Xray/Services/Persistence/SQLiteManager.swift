@@ -11,9 +11,9 @@ import SQLite
 
 actor SQLiteManager {
     static let minimumEmbeddingSimilarityDefaultsKey = "Search.MinimumEmbeddingSimilarity"
-    static let defaultMinimumEmbeddingSimilarity = 0.75
+    static let defaultMinimumEmbeddingSimilarity = 0.76
     static let minimumImageEmbeddingSimilarityDefaultsKey = "Search.MinimumImageEmbeddingSimilarity"
-    static let defaultMinimumImageEmbeddingSimilarity = 0.35
+    static let defaultMinimumImageEmbeddingSimilarity = 0.40
 
     private enum NullSearchField: String, Hashable, CaseIterable {
         case fullText
@@ -36,9 +36,14 @@ actor SQLiteManager {
     struct TopicAnnotationCounts: Sendable {
         let total: Int
         let annotated: Int
+        let unavailable: Int
+
+        var completed: Int {
+            min(total, annotated + unavailable)
+        }
 
         var missing: Int {
-            max(0, total - annotated)
+            max(0, total - completed)
         }
     }
 
@@ -179,6 +184,7 @@ actor SQLiteManager {
     private struct SchemaRebuildPost {
         let post: Post
         let normalizedTextEmbedding: [Float]
+        let topicAnnotationFailed: Bool
     }
 
     private struct VectorMatch {
@@ -309,9 +315,7 @@ actor SQLiteManager {
     func connect() async throws {
         if db == nil {
             let fm = FileManager.default
-            let appSupport = try fm.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-            let dir = appSupport.appendingPathComponent("Xray", isDirectory: true)
-            try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+            let dir = try XrayStorage.applicationSupportDirectory(fileManager: fm)
             let path = dir.appendingPathComponent(dbFileName).path
             db = try Connection(path)
             isDatabaseReady = false
@@ -347,6 +351,7 @@ actor SQLiteManager {
                 primary_topic TEXT,
                 secondary_topics TEXT,
                 secondary_topics_text TEXT,
+                topic_annotation_failed INTEGER NOT NULL DEFAULT 0,
                 bookmark_import_generation INTEGER,
                 bookmark_order INTEGER
             );
@@ -365,8 +370,15 @@ actor SQLiteManager {
         try? db.execute("ALTER TABLE Posts ADD COLUMN article TEXT;")
         try? db.execute("ALTER TABLE Posts ADD COLUMN links TEXT;")
         try? db.execute("ALTER TABLE Posts ADD COLUMN profile_image_shape TEXT NOT NULL DEFAULT 'Circle';")
+        try? db.execute("ALTER TABLE Posts ADD COLUMN topic_annotation_failed INTEGER NOT NULL DEFAULT 0;")
         try db.execute("CREATE INDEX IF NOT EXISTS posts_created_at_id_desc_idx ON Posts (created_at DESC, id DESC);")
         try db.execute("CREATE INDEX IF NOT EXISTS posts_bookmark_order_idx ON Posts (bookmark_import_generation DESC, bookmark_order ASC, created_at DESC, id DESC);")
+        try db.execute("""
+            CREATE INDEX IF NOT EXISTS posts_missing_topics_idx
+            ON Posts (created_at DESC, id DESC)
+            WHERE topic_annotation_failed = 0
+              AND trim(coalesce(primary_topic, '')) = '';
+            """)
 
         // Maintain secondary_topics_text from JSON array in secondary_topics
         let trigInsert = """
@@ -773,9 +785,7 @@ actor SQLiteManager {
 
     private func databaseFileURLs() throws -> (main: URL, wal: URL, shm: URL) {
         let fm = FileManager.default
-        let appSupport = try fm.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-        let dir = appSupport.appendingPathComponent("Xray", isDirectory: true)
-        try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        let dir = try XrayStorage.applicationSupportDirectory(fileManager: fm)
         let main = dir.appendingPathComponent(dbFileName)
         return (
             main: main,
@@ -845,6 +855,7 @@ actor SQLiteManager {
                     }
                 }
                 try restoreNormalizedTextEmbeddings(snapshot)
+                try restoreTopicAnnotationFailures(snapshot)
             }
 
             invalidateTextEmbeddingIndex()
@@ -887,7 +898,11 @@ actor SQLiteManager {
         let stmt = try db.prepare("""
         SELECT
             COUNT(*) AS total_count,
-            SUM(CASE WHEN primary_topic IS NOT NULL AND trim(primary_topic) != '' THEN 1 ELSE 0 END) AS annotated_count
+            SUM(CASE WHEN primary_topic IS NOT NULL AND trim(primary_topic) != '' THEN 1 ELSE 0 END) AS annotated_count,
+            SUM(CASE
+                WHEN trim(coalesce(primary_topic, '')) = '' AND topic_annotation_failed != 0 THEN 1
+                ELSE 0
+            END) AS unavailable_count
         FROM Posts;
         """)
 
@@ -910,10 +925,19 @@ actor SQLiteManager {
                 annotated = 0
             }
 
-            return TopicAnnotationCounts(total: total, annotated: annotated)
+            let unavailable: Int
+            if let value = row[2] as? Int64 {
+                unavailable = Int(value)
+            } else if let value = row[2] as? Int {
+                unavailable = value
+            } else {
+                unavailable = 0
+            }
+
+            return TopicAnnotationCounts(total: total, annotated: annotated, unavailable: unavailable)
         }
 
-        return TopicAnnotationCounts(total: 0, annotated: 0)
+        return TopicAnnotationCounts(total: 0, annotated: 0, unavailable: 0)
     }
 
     func clearTopics(forPostID postID: Int) async throws {
@@ -921,10 +945,23 @@ actor SQLiteManager {
         let stmt = try db.prepare("""
             UPDATE Posts
             SET primary_topic = '',
-                secondary_topics = '[]'
+                secondary_topics = '[]',
+                topic_annotation_failed = 0
             WHERE id = ?;
             """)
         try stmt.run(Int64(postID))
+    }
+
+    func clearAllTopics() async throws -> Int {
+        try await connect()
+        let postCount = try await getPostCount()
+        try db.run("""
+            UPDATE Posts
+            SET primary_topic = '',
+                secondary_topics = '[]',
+                topic_annotation_failed = 0;
+            """)
+        return postCount
     }
 
     func updateTopics(forPostID postID: Int, primaryTopic: String, secondaryTopics: [String]) async throws {
@@ -932,7 +969,8 @@ actor SQLiteManager {
         let stmt = try db.prepare("""
             UPDATE Posts
             SET primary_topic = ?,
-                secondary_topics = ?
+                secondary_topics = ?,
+                topic_annotation_failed = 0
             WHERE id = ?;
             """)
         let secondaryJSON = encodeJSON(secondaryTopics) ?? "[]"
@@ -946,13 +984,30 @@ actor SQLiteManager {
             let stmt = try db.prepare("""
                 UPDATE Posts
                 SET primary_topic = ?,
-                    secondary_topics = ?
+                    secondary_topics = ?,
+                    topic_annotation_failed = 0
                 WHERE id = ?
                   AND trim(coalesce(primary_topic, '')) = '';
                 """)
             for update in updates {
                 let secondaryJSON = encodeJSON(update.secondaryTopics) ?? "[]"
                 try stmt.run(update.primaryTopic, secondaryJSON, Int64(update.postID))
+            }
+        }
+    }
+
+    func markTopicAnnotationUnavailable(postIDs: Set<Int>) async throws {
+        guard !postIDs.isEmpty else { return }
+        try await connect()
+        try db.transaction {
+            let stmt = try db.prepare("""
+                UPDATE Posts
+                SET topic_annotation_failed = 1
+                WHERE id = ?
+                  AND trim(coalesce(primary_topic, '')) = '';
+                """)
+            for postID in postIDs {
+                try stmt.run(Int64(postID))
             }
         }
     }
@@ -1231,7 +1286,8 @@ actor SQLiteManager {
 
             posts.append(SchemaRebuildPost(
                 post: decoded.post,
-                normalizedTextEmbedding: decoded.normalizedTextEmbedding
+                normalizedTextEmbedding: decoded.normalizedTextEmbedding,
+                topicAnnotationFailed: decoded.topicAnnotationFailed
             ))
         }
         return posts
@@ -1245,6 +1301,16 @@ actor SQLiteManager {
             let stmt = try db.prepare("UPDATE Posts SET text_embedding_normalized = ? WHERE id = ?;")
             for item in stored {
                 try stmt.run(floatsToBlob(item.normalizedTextEmbedding), Int64(item.post.id))
+            }
+        }
+    }
+
+    private func restoreTopicAnnotationFailures(_ snapshot: [SchemaRebuildPost]) throws {
+        let failedPostIDs = snapshot.lazy.filter(\.topicAnnotationFailed).map { $0.post.id }
+        try db.transaction {
+            let stmt = try db.prepare("UPDATE Posts SET topic_annotation_failed = 1 WHERE id = ?;")
+            for postID in failedPostIDs {
+                try stmt.run(Int64(postID))
             }
         }
     }
@@ -1327,6 +1393,39 @@ actor SQLiteManager {
         """
         let stmt = try db.prepare(sql)
         var out: [Post] = []
+        for row in try stmt.run(args) {
+            out.append(postRowDecoder.decode(row).post)
+        }
+        return out
+    }
+
+    func fetchPostsMissingTopics(
+        limit: Int,
+        beforeCreatedAt: Date? = nil,
+        beforeId: Int? = nil
+    ) async throws -> [Post] {
+        guard limit > 0 else { return [] }
+        try await connect()
+        var args: [Binding?] = []
+        var cursorSQL = ""
+        if let beforeCreatedAt, let beforeId {
+            cursorSQL = "AND (created_at < ? OR (created_at = ? AND id < ?))"
+            args.append(beforeCreatedAt.timeIntervalSince1970)
+            args.append(beforeCreatedAt.timeIntervalSince1970)
+            args.append(Int64(beforeId))
+        }
+        let sql = """
+        SELECT \(SQLitePostRowDecoder.standardProjection)
+        FROM Posts
+        WHERE topic_annotation_failed = 0
+          AND trim(coalesce(primary_topic, '')) = ''
+          \(cursorSQL)
+        ORDER BY created_at DESC, id DESC
+        LIMIT \(limit);
+        """
+        let stmt = try db.prepare(sql)
+        var out: [Post] = []
+        out.reserveCapacity(limit)
         for row in try stmt.run(args) {
             out.append(postRowDecoder.decode(row).post)
         }

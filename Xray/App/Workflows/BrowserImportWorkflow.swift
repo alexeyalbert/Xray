@@ -3,12 +3,7 @@ import Foundation
 extension AppModel {
     func beginBrowserImportReceiver() {
         Task {
-            if let existingReceiver = browserImportReceiver {
-                existingReceiver.stop()
-                await MainActor.run {
-                    browserImportReceiver = nil
-                }
-            }
+            await endBrowserImportReceiver()
 
             let token = BrowserImportReceiverSettings.stableToken()
             let preferredPort = BrowserImportReceiverSettings.preferredPort()
@@ -59,6 +54,7 @@ extension AppModel {
                 importState.browserImportInsertedCount = 0
                 importState.browserImportSkippedExistingCount = 0
                 importState.browserImportCompleted = false
+                importState.isBrowserImportDraining = false
             }
 
             do {
@@ -87,16 +83,37 @@ extension AppModel {
         }
     }
 
-    func endBrowserImportReceiver() {
-        browserImportReceiver?.stop()
-        browserImportReceiver = nil
-        importState.isBrowserImportReceiverRunning = false
-        importState.browserImportReceiverStatus = "Receiver is stopped."
-        importState.browserImportReceiverError = nil
-        importState.browserImportReceiverURL = ""
-        importState.browserImportReceiverToken = ""
-        importState.isBrowserImportConnectionInfoPresented = false
-        importState.browserImportActiveSessionID = nil
-        importState.browserImportCompleted = false
+    func endBrowserImportReceiver() async {
+        let shutdown = await MainActor.run { () -> Task<Void, Never>? in
+            if let existing = browserImportShutdownTask {
+                return existing
+            }
+
+            guard let receiver = browserImportReceiver else {
+                return nil
+            }
+
+            browserImportReceiver = nil
+            importState.isBrowserImportDraining = true
+            importState.isBrowserImportReceiverRunning = false
+            importState.browserImportReceiverStatus = "Receiver is stopped."
+            importState.browserImportReceiverError = nil
+            importState.browserImportReceiverURL = ""
+            importState.browserImportReceiverToken = ""
+            importState.isBrowserImportConnectionInfoPresented = false
+
+            let task = Task {
+                await receiver.stopAndDrain()
+                await MainActor.run {
+                    importState.isBrowserImportDraining = false
+                    importState.browserImportActiveSessionID = nil
+                    importState.browserImportCompleted = false
+                    browserImportShutdownTask = nil
+                }
+            }
+            browserImportShutdownTask = task
+            return task
+        }
+        await shutdown?.value
     }
 }

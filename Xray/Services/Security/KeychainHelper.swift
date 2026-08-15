@@ -78,7 +78,8 @@ enum KeychainHelper {
 }
 
 enum AppSecretsKey: String {
-    case openAIAPIKey = "openai_api_key"
+    case openRouterAPIKey = "openai_api_key"
+    case openAICompatibleTopicAPIKey = "openai_compatible_topic_api_key"
     case remoteEmbeddingAPIKey = "remote_embedding_api_key"
 }
 

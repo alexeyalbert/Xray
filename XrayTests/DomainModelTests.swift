@@ -26,8 +26,8 @@ struct DomainModelTests {
             url: postURL,
             text_embedding: [],
             img_embedding: [],
-            primary_topic: "software",
-            secondary_topics: ["swift"]
+            primary_topic: "Software",
+            secondary_topics: ["SwiftUI", "OpenAI API"]
         )
 
         let encoded = try JSONEncoder().encode(post)
@@ -37,8 +37,8 @@ struct DomainModelTests {
         #expect(decoded.links.count == 1)
         #expect(decoded.links.first?.destination == destination)
         #expect(decoded.links.first?.displayName == "example.com/article")
-        #expect(decoded.primary_topic == "software")
-        #expect(decoded.secondary_topics == ["swift"])
+        #expect(decoded.primary_topic == "Software")
+        #expect(decoded.secondary_topics == ["SwiftUI", "OpenAI API"])
     }
 
     @Test("HTML entities decode in imported text models")
@@ -47,10 +47,247 @@ struct DomainModelTests {
         #expect("No entities".decodedHTMLText == "No entities")
     }
 
-    @Test("Topic labels preserve product capitalization")
-    func topicDisplayFormatting() {
-        #expect(TopicDisplayFormatter.displayName(for: "swiftui development") == "SwiftUI Development")
-        #expect(TopicDisplayFormatter.displayName(for: "  openai   api ") == "OpenAI API")
+    @Test("Generated topics preserve provider capitalization")
+    func generatedTopicCapitalization() throws {
+        let topics = try #require(TopicAnnotator.parseTopics(from: """
+        {"primary_topic":"  Technology  ","secondary_topics":["AI","OpenAI API","ai","SwiftUI"]}
+        """))
+
+        #expect(topics.primary_topic == "Technology")
+        #expect(topics.secondary_topics == ["AI", "OpenAI API", "SwiftUI"])
+    }
+
+    @Test("Topic generation exposes only OpenRouter and OpenAI-compatible providers")
+    func topicGenerationProviderChoices() {
+        #expect(AIProvider.allCases == [.openrouter, .openAICompatible])
+        #expect(AppSecretsKey.openRouterAPIKey.rawValue != AppSecretsKey.openAICompatibleTopicAPIKey.rawValue)
+    }
+
+    @Test("Topic generation stays unconfigured without credentials for remote OpenAI-compatible defaults")
+    func topicGenerationRequiresCredentialsForRemoteCompatibleProvider() {
+        #expect(
+            !OpenAIManager.isTopicGenerationConfigured(
+                provider: .openAICompatible,
+                model: OpenAIManager.defaultCompatibleModel,
+                baseURL: OpenAIManager.defaultCompatibleBaseURL,
+                apiKey: nil
+            )
+        )
+        #expect(
+            OpenAIManager.isTopicGenerationConfigured(
+                provider: .openAICompatible,
+                model: OpenAIManager.defaultCompatibleModel,
+                baseURL: OpenAIManager.defaultCompatibleBaseURL,
+                apiKey: "sk-test"
+            )
+        )
+        #expect(
+            OpenAIManager.isTopicGenerationConfigured(
+                provider: .openAICompatible,
+                model: "llama3",
+                baseURL: "http://localhost:1234/v1",
+                apiKey: nil
+            )
+        )
+        #expect(
+            OpenAIManager.isTopicGenerationConfigured(
+                provider: .openAICompatible,
+                model: "llama3",
+                baseURL: "http://127.0.0.1:1234/v1",
+                apiKey: nil
+            )
+        )
+        #expect(
+            OpenAIManager.isTopicGenerationConfigured(
+                provider: .openAICompatible,
+                model: "llama3",
+                baseURL: "http://100.64.1.5:1234/v1",
+                apiKey: nil
+            )
+        )
+        #expect(
+            OpenAIManager.isTopicGenerationConfigured(
+                provider: .openAICompatible,
+                model: "llama3",
+                baseURL: "http://100.127.255.255:1234/v1",
+                apiKey: nil
+            )
+        )
+        #expect(
+            OpenAIManager.isTopicGenerationConfigured(
+                provider: .openAICompatible,
+                model: "llama3",
+                baseURL: "http://[fd7a:115c:a1e0::1]:1234/v1",
+                apiKey: nil
+            )
+        )
+        #expect(
+            OpenAIManager.isTopicGenerationConfigured(
+                provider: .openAICompatible,
+                model: "llama3",
+                baseURL: "http://machine.tailnet.ts.net:1234/v1",
+                apiKey: nil
+            )
+        )
+        #expect(
+            OpenAIManager.isTopicGenerationConfigured(
+                provider: .openAICompatible,
+                model: "llama3",
+                baseURL: "http://192.168.1.10:1234/v1",
+                apiKey: nil
+            )
+        )
+        #expect(
+            OpenAIManager.isTopicGenerationConfigured(
+                provider: .openAICompatible,
+                model: "llama3",
+                baseURL: "http://10.0.0.5:1234/v1",
+                apiKey: nil
+            )
+        )
+        #expect(
+            OpenAIManager.isTopicGenerationConfigured(
+                provider: .openAICompatible,
+                model: "llama3",
+                baseURL: "http://172.16.0.1:1234/v1",
+                apiKey: nil
+            )
+        )
+        #expect(
+            OpenAIManager.isTopicGenerationConfigured(
+                provider: .openAICompatible,
+                model: "llama3",
+                baseURL: "http://studio.local:1234/v1",
+                apiKey: nil
+            )
+        )
+        #expect(
+            OpenAIManager.isTopicGenerationConfigured(
+                provider: .openAICompatible,
+                model: "llama3",
+                baseURL: "http://[fd12:3456:789a::1]:1234/v1",
+                apiKey: nil
+            )
+        )
+        #expect(
+            !OpenAIManager.isTopicGenerationConfigured(
+                provider: .openAICompatible,
+                model: "llama3",
+                baseURL: "http://100.63.255.255:1234/v1",
+                apiKey: nil
+            )
+        )
+        #expect(
+            !OpenAIManager.isTopicGenerationConfigured(
+                provider: .openAICompatible,
+                model: "llama3",
+                baseURL: "http://172.15.0.1:1234/v1",
+                apiKey: nil
+            )
+        )
+        #expect(
+            !OpenAIManager.isTopicGenerationConfigured(
+                provider: .openAICompatible,
+                model: "llama3",
+                baseURL: "http://8.8.8.8:1234/v1",
+                apiKey: nil
+            )
+        )
+        #expect(
+            !OpenAIManager.isTopicGenerationConfigured(
+                provider: .openAICompatible,
+                model: OpenAIManager.defaultCompatibleModel,
+                baseURL: "https://api.openai.com/v1",
+                apiKey: nil
+            )
+        )
+        #expect(
+            !OpenAIManager.isTopicGenerationConfigured(
+                provider: .openAICompatible,
+                model: "",
+                baseURL: OpenAIManager.defaultCompatibleBaseURL,
+                apiKey: "sk-test"
+            )
+        )
+        #expect(
+            !OpenAIManager.isTopicGenerationConfigured(
+                provider: .openAICompatible,
+                model: OpenAIManager.defaultCompatibleModel,
+                baseURL: "not a URL",
+                apiKey: "sk-test"
+            )
+        )
+        #expect(
+            !OpenAIManager.isTopicGenerationConfigured(
+                provider: .openrouter,
+                model: "",
+                baseURL: "",
+                apiKey: nil
+            )
+        )
+        #expect(
+            OpenAIManager.isTopicGenerationConfigured(
+                provider: .openrouter,
+                model: "",
+                baseURL: "",
+                apiKey: "sk-or-test"
+            )
+        )
+    }
+
+    @Test("OpenAI-compatible base URLs resolve to chat completions")
+    func openAICompatibleChatCompletionsURLs() throws {
+        #expect(
+            try OpenAIManager.chatCompletionsEndpoint(from: "https://api.openai.com/v1")
+                .absoluteString == "https://api.openai.com/v1/chat/completions"
+        )
+        #expect(
+            try OpenAIManager.chatCompletionsEndpoint(from: "http://localhost:1234")
+                .absoluteString == "http://localhost:1234/v1/chat/completions"
+        )
+        #expect(
+            try OpenAIManager.chatCompletionsEndpoint(from: "https://example.com/custom/v1/chat/completions")
+                .absoluteString == "https://example.com/custom/v1/chat/completions"
+        )
+        #expect(throws: URLError.self) {
+            try OpenAIManager.chatCompletionsEndpoint(from: "not a URL")
+        }
+    }
+
+    @Test("Only content-specific HTTP failures are persisted as unavailable")
+    func persistentTopicFailuresStayContentSpecific() {
+        #expect(!TopicAnnotator.isPersistentTopicFailureCode(400))
+        #expect(!TopicAnnotator.isPersistentTopicFailureCode(401))
+        #expect(!TopicAnnotator.isPersistentTopicFailureCode(403))
+        #expect(!TopicAnnotator.isPersistentTopicFailureCode(404))
+        #expect(!TopicAnnotator.isPersistentTopicFailureCode(422))
+        #expect(!TopicAnnotator.isPersistentTopicFailureCode(429))
+        #expect(!TopicAnnotator.isPersistentTopicFailureCode(500))
+        #expect(TopicAnnotator.isPersistentTopicFailureCode(413))
+    }
+
+    @Test("Concurrent topic requests determine persistence frequency for every provider")
+    func topicPersistencePageSizes() {
+        #expect(OpenAIManager.defaultTopicConcurrentRequests(for: .openrouter) == 100)
+        #expect(OpenAIManager.defaultTopicConcurrentRequests(for: .openAICompatible) == 16)
+        #expect(
+            OpenAIManager.topicPersistencePageSize(for: .openAICompatible, concurrentRequests: 1) == 1
+        )
+        #expect(
+            OpenAIManager.topicPersistencePageSize(for: .openAICompatible, concurrentRequests: 16) == 16
+        )
+        #expect(
+            OpenAIManager.topicPersistencePageSize(for: .openAICompatible, concurrentRequests: 1000)
+                == OpenAIManager.topicConcurrentRequestsRange.upperBound
+        )
+        #expect(
+            OpenAIManager.topicPersistencePageSize(for: .openrouter, concurrentRequests: 1)
+                == 1
+        )
+        #expect(
+            OpenAIManager.topicPersistencePageSize(for: .openrouter, concurrentRequests: 100)
+                == 100
+        )
     }
 
     @Test("SQLite projections stay aligned with their canonical layouts")
@@ -61,13 +298,29 @@ struct DomainModelTests {
         #expect(standardColumns[SQLitePostRowDecoder.Layout.standard.bookmarkOrder!] == "bookmark_order")
 
         let rebuildColumns = projectionColumns(SQLitePostRowDecoder.schemaRebuildProjection)
-        #expect(rebuildColumns.count == 19)
+        #expect(rebuildColumns.count == 20)
         #expect(rebuildColumns[SQLitePostRowDecoder.Layout.schemaRebuild.normalizedTextEmbedding!] == "text_embedding_normalized")
         #expect(rebuildColumns[SQLitePostRowDecoder.Layout.schemaRebuild.links] == "links")
+        #expect(rebuildColumns[SQLitePostRowDecoder.Layout.schemaRebuild.topicAnnotationFailed!] == "topic_annotation_failed")
 
         let unorderedColumns = projectionColumns(SQLitePostRowDecoder.projectionWithoutBookmarkOrdering)
         #expect(unorderedColumns.count == 14)
         #expect(unorderedColumns[SQLitePostRowDecoder.Layout.withoutBookmarkOrdering.links] == "links")
+    }
+
+    @Test("Incomplete browser import sessions block app updates")
+    func incompleteBrowserImportBlocksAppUpdates() {
+        let state = ImportState()
+        #expect(!state.isBrowserImportInProgress)
+
+        state.browserImportActiveSessionID = "session-1"
+        #expect(state.isBrowserImportInProgress)
+
+        state.browserImportCompleted = true
+        #expect(!state.isBrowserImportInProgress)
+
+        state.isBrowserImportDraining = true
+        #expect(state.isBrowserImportInProgress)
     }
 
     private func projectionColumns(_ projection: String) -> [String] {

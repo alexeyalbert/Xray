@@ -8,6 +8,7 @@ class ImportState {
     var isLoading: Bool = false
     var allPostsLoaded: Bool = false
     var loadMorePosts: (() -> Void)? = nil
+    var windowContentRevision: Int = 0
     
     // Database import progress
     var isDatabaseImporting: Bool = false
@@ -67,6 +68,12 @@ class ImportState {
     var browserImportInsertedCount: Int = 0
     var browserImportSkippedExistingCount: Int = 0
     var browserImportCompleted: Bool = false
+    var isBrowserImportDraining: Bool = false
+
+    var isBrowserImportInProgress: Bool {
+        isBrowserImportDraining
+            || (browserImportActiveSessionID != nil && !browserImportCompleted)
+    }
 
     // Search mode selection for menu commands
     var searchMode: SearchMode = .hybrid

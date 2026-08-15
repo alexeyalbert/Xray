@@ -6,98 +6,305 @@
 //
 
 import Foundation
-#if canImport(OpenAI)
-import OpenAI
-#endif
+import Network
 
 enum AIProvider: String, CaseIterable {
-    case openai = "OpenAI"
     case openrouter = "OpenRouter"
-    
-    var baseURL: String? {
+    case openAICompatible = "OpenAI-Compatible API"
+
+    var displayName: LocalizedStringResource {
         switch self {
-        case .openai:
-            return nil // Uses default OpenAI URL
         case .openrouter:
-            return "https://openrouter.ai/api/v1"
+            "OpenRouter"
+        case .openAICompatible:
+            "OpenAI-Compatible API"
         }
     }
 }
 
 enum OpenAIManager {
     static let providerKey = "ai_provider"
+    static let compatibleBaseURLKey = "topic_openai_compatible_base_url"
+    static let compatibleModelKey = "topic_openai_compatible_model"
+    private static let openRouterConcurrentRequestsKey = "topic_openrouter_concurrent_requests"
+    private static let compatibleConcurrentRequestsKey = "topic_openai_compatible_concurrent_requests"
+    private static let separatedTopicAPIKeysMigrationKey = "topic_separate_api_keys_migrated"
+
+    static let defaultCompatibleBaseURL = "https://api.openai.com/v1"
+    static let defaultCompatibleModel = "gpt-4.1-mini"
+    static let defaultOpenRouterConcurrentRequests = 100
+    static let defaultCompatibleConcurrentRequests = 16
+    static let topicConcurrentRequestsRange = 1...128
+
     private static let openRouterAppName = "Xray"
-    
+
     static var currentProvider: AIProvider {
         get {
-            guard let rawValue = UserDefaults.standard.string(forKey: providerKey),
-                  let provider = AIProvider(rawValue: rawValue) else {
-                return .openai
+            guard let rawValue = UserDefaults.standard.string(forKey: providerKey) else {
+                return .openAICompatible
             }
-            return provider
+            if rawValue == "OpenAI" {
+                return .openAICompatible
+            }
+            return AIProvider(rawValue: rawValue) ?? .openAICompatible
         }
         set {
             UserDefaults.standard.set(newValue.rawValue, forKey: providerKey)
         }
     }
-    
-    /// Build OpenRouter auth headers with the app attribution baked in.
-    /// HTTP-Referer is intentionally omitted until Xray has a public app URL.
-    static func openRouterHTTPHeaders() -> [String: String]? {
-        guard let key = currentAPIKey() else { return nil }
-        return [
-            "Authorization": "Bearer \(key)",
-            "Content-Type": "application/json",
-            "X-Title": openRouterAppName
-        ]
+
+    static var compatibleBaseURL: String {
+        get {
+            let stored = UserDefaults.standard.string(forKey: compatibleBaseURLKey)?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return stored.isEmpty ? defaultCompatibleBaseURL : stored
+        }
+        set {
+            UserDefaults.standard.set(
+                newValue.trimmingCharacters(in: .whitespacesAndNewlines),
+                forKey: compatibleBaseURLKey
+            )
+        }
+    }
+
+    static var compatibleModel: String {
+        get {
+            let stored = UserDefaults.standard.string(forKey: compatibleModelKey)?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return stored.isEmpty ? defaultCompatibleModel : stored
+        }
+        set {
+            UserDefaults.standard.set(
+                newValue.trimmingCharacters(in: .whitespacesAndNewlines),
+                forKey: compatibleModelKey
+            )
+        }
+    }
+
+    static func defaultTopicConcurrentRequests(for provider: AIProvider) -> Int {
+        switch provider {
+        case .openrouter:
+            defaultOpenRouterConcurrentRequests
+        case .openAICompatible:
+            defaultCompatibleConcurrentRequests
+        }
+    }
+
+    static func topicConcurrentRequests(for provider: AIProvider) -> Int {
+        let defaults = UserDefaults.standard
+        let key: String
+        switch provider {
+        case .openrouter:
+            key = openRouterConcurrentRequestsKey
+        case .openAICompatible:
+            key = compatibleConcurrentRequestsKey
+        }
+
+        let stored: Int
+        if defaults.object(forKey: key) != nil {
+            stored = defaults.integer(forKey: key)
+        } else {
+            stored = defaultTopicConcurrentRequests(for: provider)
+        }
+        return min(
+            max(stored, topicConcurrentRequestsRange.lowerBound),
+            topicConcurrentRequestsRange.upperBound
+        )
+    }
+
+    static func setTopicConcurrentRequests(_ value: Int, for provider: AIProvider) {
+        let key = switch provider {
+        case .openrouter: openRouterConcurrentRequestsKey
+        case .openAICompatible: compatibleConcurrentRequestsKey
+        }
+        UserDefaults.standard.set(
+            min(
+                max(value, topicConcurrentRequestsRange.lowerBound),
+                topicConcurrentRequestsRange.upperBound
+            ),
+            forKey: key
+        )
+    }
+
+    static var topicConcurrentRequests: Int {
+        topicConcurrentRequests(for: currentProvider)
+    }
+
+    static func topicPersistencePageSize(for provider: AIProvider, concurrentRequests: Int) -> Int {
+        switch provider {
+        case .openrouter, .openAICompatible:
+            min(
+                max(concurrentRequests, topicConcurrentRequestsRange.lowerBound),
+                topicConcurrentRequestsRange.upperBound
+            )
+        }
     }
 
     static func currentAPIKey() -> String? {
-        KeychainHelper.readString(for: AppSecretsKey.openAIAPIKey.rawValue)
+        migrateTopicAPIKeysIfNeeded()
+        return apiKey(for: currentProvider)
+    }
+
+    static func apiKey(for provider: AIProvider) -> String? {
+        let account: String
+        switch provider {
+        case .openrouter:
+            account = AppSecretsKey.openRouterAPIKey.rawValue
+        case .openAICompatible:
+            account = AppSecretsKey.openAICompatibleTopicAPIKey.rawValue
+        }
+
+        return KeychainHelper.readString(for: account)
             .flatMap { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .flatMap { $0.isEmpty ? nil : $0 }
     }
 
-#if canImport(OpenAI)
-    static func makeClient() -> OpenAI? {
-        guard let key = currentAPIKey() else { return nil }
-        
-        switch currentProvider {
-        case .openai:
-            // Use default OpenAI configuration with relaxed parsing
-            let configuration = OpenAI.Configuration(
-                token: key,
-                parsingOptions: .relaxed
-            )
-            return OpenAI(configuration: configuration)
-            
-        case .openrouter:
-            return makeOpenRouterClient()
+    static func migrateTopicAPIKeysIfNeeded() {
+        guard !UserDefaults.standard.bool(forKey: separatedTopicAPIKeysMigrationKey) else {
+            return
         }
+
+        // The previous shared `openai_api_key` account is now the OpenRouter slot.
+        // Users whose provider was OpenAI (including the old default) still have
+        // that credential there; copy it into the compatible-provider account and
+        // delete the original so it cannot later be sent to openrouter.ai.
+        if currentProvider == .openAICompatible,
+           apiKey(for: .openAICompatible) == nil,
+           let legacyKey = apiKey(for: .openrouter)
+        {
+            guard KeychainHelper.saveString(
+                legacyKey,
+                for: AppSecretsKey.openAICompatibleTopicAPIKey.rawValue
+            ) else {
+                return
+            }
+            _ = KeychainHelper.delete(for: AppSecretsKey.openRouterAPIKey.rawValue)
+        }
+
+        UserDefaults.standard.set(true, forKey: separatedTopicAPIKeysMigrationKey)
     }
-    
-    /// Create a client for OpenRouter.
-    static func makeOpenRouterClient() -> OpenAI? {
-        guard let key = currentAPIKey() else {
-            #if DEBUG
-            print("OpenRouter client creation failed: API key missing")
-            #endif
-            return nil 
-        }
-        
-        #if DEBUG
-        print("Configuring OpenRouter client")
-        #endif
-        
-        // Configure for OpenRouter using host and scheme (path will be handled automatically)
-        let configuration = OpenAI.Configuration(
-            token: key,
-            host: "openrouter.ai",
-            scheme: "https",
-            parsingOptions: .relaxed
+
+    static var isTopicGenerationConfigured: Bool {
+        isTopicGenerationConfigured(
+            provider: currentProvider,
+            model: compatibleModel,
+            baseURL: compatibleBaseURL,
+            apiKey: currentAPIKey()
         )
-        
-        return OpenAI(configuration: configuration)
     }
-#endif
+
+    static func isTopicGenerationConfigured(
+        provider: AIProvider,
+        model: String,
+        baseURL: String,
+        apiKey: String?
+    ) -> Bool {
+        switch provider {
+        case .openrouter:
+            apiKey != nil
+        case .openAICompatible:
+            !model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                && (try? chatCompletionsEndpoint(from: baseURL)) != nil
+                && (apiKey != nil || compatibleEndpointAllowsMissingAPIKey(baseURL))
+        }
+    }
+
+    static var topicModel: String {
+        switch currentProvider {
+        case .openrouter:
+            "google/gemini-2.5-flash-lite"
+        case .openAICompatible:
+            compatibleModel
+        }
+    }
+
+    static func topicHTTPHeaders() -> [String: String] {
+        var headers = ["Content-Type": "application/json"]
+        if let key = currentAPIKey() {
+            headers["Authorization"] = "Bearer \(key)"
+        }
+        if currentProvider == .openrouter {
+            headers["X-Title"] = openRouterAppName
+        }
+        return headers
+    }
+
+    static func chatCompletionsEndpoint(from baseURLString: String) throws -> URL {
+        let trimmed = baseURLString.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard
+            !trimmed.isEmpty,
+            var components = URLComponents(string: trimmed),
+            let scheme = components.scheme?.lowercased(),
+            scheme == "http" || scheme == "https",
+            components.host != nil
+        else {
+            throw URLError(.badURL)
+        }
+
+        let path = components.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        if path == "chat/completions" || path.hasSuffix("/chat/completions") {
+            components.path = "/" + path
+        } else if path.isEmpty {
+            components.path = "/v1/chat/completions"
+        } else {
+            components.path = "/" + path + "/chat/completions"
+        }
+
+        guard let url = components.url else {
+            throw URLError(.badURL)
+        }
+        return url
+    }
+
+    /// Local OpenAI-compatible servers often omit auth. Remote hosts such as
+    /// `api.openai.com` still require a key; the default base URL is remote.
+    /// Private LAN, link-local, Tailscale, and `.local` / `*.ts.net` names
+    /// are treated like local hosts.
+    private static func compatibleEndpointAllowsMissingAPIKey(_ baseURLString: String) -> Bool {
+        guard
+            let endpoint = try? chatCompletionsEndpoint(from: baseURLString),
+            let host = URLComponents(url: endpoint, resolvingAgainstBaseURL: false)?.host
+        else {
+            return false
+        }
+        let normalized = host.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
+        if normalized == "localhost"
+            || normalized.hasSuffix(".local")
+            || normalized.hasSuffix(".ts.net")
+        {
+            return true
+        }
+        if let ipv4 = IPv4Address(normalized) {
+            return ipv4AllowsMissingAPIKey(ipv4)
+        }
+        if let ipv6 = IPv6Address(normalized) {
+            return ipv6AllowsMissingAPIKey(ipv6)
+        }
+        return false
+    }
+
+    private static func ipv4AllowsMissingAPIKey(_ address: IPv4Address) -> Bool {
+        if address.isLoopback || address.isLinkLocal {
+            return true
+        }
+        let octets = [UInt8](address.rawValue)
+        guard octets.count == 4 else { return false }
+        // RFC 1918
+        if octets[0] == 10 { return true }
+        if octets[0] == 192 && octets[1] == 168 { return true }
+        if octets[0] == 172 && (16...31).contains(octets[1]) { return true }
+        // Tailscale CGNAT: `100.64.0.0/10`
+        return octets[0] == 100 && (64...127).contains(octets[1])
+    }
+
+    private static func ipv6AllowsMissingAPIKey(_ address: IPv6Address) -> Bool {
+        if address.isLoopback || address.isLinkLocal {
+            return true
+        }
+        let octets = [UInt8](address.rawValue)
+        guard let first = octets.first else { return false }
+        // Unique local addresses `fc00::/7`, including Tailscale `fd7a:115c:a1e0::/48`
+        return first & 0xfe == 0xfc
+    }
+
 }

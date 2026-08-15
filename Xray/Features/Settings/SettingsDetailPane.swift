@@ -9,8 +9,13 @@ struct SettingsDetailPane: View {
     @Binding var animateExpandedMediaResize: Bool
 
     @Binding var selectedProvider: AIProvider
-    @Binding var apiKey: String
-    @Binding var savedFeedback: String
+    @Binding var openRouterAPIKey: String
+    @Binding var openRouterSavedFeedback: String
+    @Binding var compatibleTopicAPIKey: String
+    @Binding var compatibleTopicSavedFeedback: String
+    @Binding var compatibleTopicBaseURL: String
+    @Binding var compatibleTopicModel: String
+    @Binding var topicConcurrentRequests: Int
     @Binding var selectedEmbeddingProvider: EmbeddingProviderKind
     @Binding var textEmbeddingBatchSize: Int
     @Binding var remoteEmbeddingBaseURL: String
@@ -28,11 +33,13 @@ struct SettingsDetailPane: View {
     let localModelManager: LocalEmbeddingModelManager
     let importState: ImportState
     let onSaveSettings: () -> Void
-    let onSaveAPIKey: () -> Void
+    let onSaveOpenRouterAPIKey: () -> Void
+    let onSaveCompatibleTopicAPIKey: () -> Void
     let onSaveRemoteEmbeddingAPIKey: () -> Void
     let onSavePreferredPort: () -> Void
     let onRebuildDatabaseSchema: () -> Void
     let onResetDatabase: () -> Void
+    let onResetStoredTopics: () -> Void
 
     var body: some View {
         switch category {
@@ -46,8 +53,13 @@ struct SettingsDetailPane: View {
         case .ai:
             AISettingsPane(
                 selectedProvider: $selectedProvider,
-                apiKey: $apiKey,
-                savedFeedback: $savedFeedback,
+                openRouterAPIKey: $openRouterAPIKey,
+                openRouterSavedFeedback: $openRouterSavedFeedback,
+                compatibleTopicAPIKey: $compatibleTopicAPIKey,
+                compatibleTopicSavedFeedback: $compatibleTopicSavedFeedback,
+                compatibleTopicBaseURL: $compatibleTopicBaseURL,
+                compatibleTopicModel: $compatibleTopicModel,
+                topicConcurrentRequests: $topicConcurrentRequests,
                 selectedEmbeddingProvider: $selectedEmbeddingProvider,
                 textEmbeddingBatchSize: $textEmbeddingBatchSize,
                 remoteEmbeddingBaseURL: $remoteEmbeddingBaseURL,
@@ -56,7 +68,8 @@ struct SettingsDetailPane: View {
                 remoteEmbeddingFeedback: $remoteEmbeddingFeedback,
                 localModelManager: localModelManager,
                 onSaveSettings: onSaveSettings,
-                onSaveAPIKey: onSaveAPIKey,
+                onSaveOpenRouterAPIKey: onSaveOpenRouterAPIKey,
+                onSaveCompatibleTopicAPIKey: onSaveCompatibleTopicAPIKey,
                 onSaveRemoteEmbeddingAPIKey: onSaveRemoteEmbeddingAPIKey
             )
         case .browserImport:
@@ -72,7 +85,8 @@ struct SettingsDetailPane: View {
                 showToolbarInfoButton: $showToolbarInfoButton,
                 importState: importState,
                 onRebuildDatabaseSchema: onRebuildDatabaseSchema,
-                onResetDatabase: onResetDatabase
+                onResetDatabase: onResetDatabase,
+                onResetStoredTopics: onResetStoredTopics
             )
         }
     }

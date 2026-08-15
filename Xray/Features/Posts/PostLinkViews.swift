@@ -62,50 +62,62 @@ struct InlinePostText: View {
     let text: String
     let links: [PostLink]
     let isInteractive: Bool
-
+    
     private var paragraphs: [String] {
         text.components(separatedBy: .newlines)
     }
-
+    
     private var linksMissingFromText: [PostLink] {
         links.filter { !text.contains($0.displayName) }
     }
-
+    
     private var shouldAppendMissingLinksToLastLine: Bool {
         text.trimmingCharacters(in: .whitespacesAndNewlines).hasSuffix(":") || text.isEmpty
     }
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
             ForEach(Array(paragraphs.enumerated()), id: \.offset) { index, paragraph in
                 let isLastParagraph = index == paragraphs.count - 1
-                FlowLayout(spacing: 4, rowSpacing: 2) {
+                FlowLayout(
+                    spacing: 4,
+                    rowSpacing: 2,
+                    constrainOversizedSubviews: true
+                ) {
                     ForEach(Array(words(in: paragraph).enumerated()), id: \.offset) { _, word in
                         if let link = link(for: word) {
                             InlineTextLink(label: word, link: link, isInteractive: isInteractive)
                         } else {
                             Text(word)
-                                .lineLimit(1)
+                                .fixedSize(horizontal: false, vertical: true)
                                 .foregroundStyle(Color(NSColor.textColor))
                         }
                     }
-
+                    
                     if isLastParagraph && shouldAppendMissingLinksToLastLine {
                         inlineMissingLinks
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-
+            
             if paragraphs.isEmpty {
-                FlowLayout(spacing: 4, rowSpacing: 2) {
+                FlowLayout(
+                    spacing: 4,
+                    rowSpacing: 2,
+                    constrainOversizedSubviews: true
+                ) {
                     inlineMissingLinks
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-
+            
             if !shouldAppendMissingLinksToLastLine && !linksMissingFromText.isEmpty {
-                FlowLayout(spacing: 4, rowSpacing: 2) {
+                FlowLayout(
+                    spacing: 4,
+                    rowSpacing: 2,
+                    constrainOversizedSubviews: true
+                ) {
                     inlineMissingLinks
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -113,18 +125,18 @@ struct InlinePostText: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
-
+    
     @ViewBuilder
     private var inlineMissingLinks: some View {
         ForEach(linksMissingFromText) { link in
             InlineTextLink(label: link.displayName, link: link, isInteractive: isInteractive)
         }
     }
-
+    
     private func link(for word: String) -> PostLink? {
         links.first { word.contains($0.displayName) }
     }
-
+    
     private func words(in paragraph: String) -> [String] {
         paragraph
             .split(whereSeparator: { $0.isWhitespace })
@@ -138,13 +150,14 @@ private struct InlineTextLink: View {
     let isInteractive: Bool
     @Environment(\.openURL) private var openURL
     @State private var isHovering = false
-
+    
     var body: some View {
         let text = Text(label)
-            .lineLimit(2)
+            .fixedSize(horizontal: false, vertical: true)
+            .multilineTextAlignment(.leading)
             .foregroundStyle(Color(NSColor.linkColor))
             .underline(isHovering)
-
+        
         if isInteractive {
             Button {
                 openURL(link.destination)
@@ -173,7 +186,7 @@ private struct LinkPreviewRow: View {
                 if let imageURL = card.image_url {
                     ZStack {
                         Color(NSColor.tertiarySystemFill)
-
+                        
                         if isParentVisible {
                             LinkPreviewImage(
                                 primaryURL: imageURL,
@@ -265,14 +278,14 @@ private struct LinkPreviewRow: View {
 private struct LinkPreviewImage: View {
     let primaryURL: URL
     let destinationURL: URL
-
+    
     @State private var fallbackURL: URL?
     @State private var primaryLoadFailed = false
-
+    
     private var displayedURL: URL {
         fallbackURL ?? primaryURL
     }
-
+    
     var body: some View {
         GeometryReader { proxy in
             KFImage(displayedURL)

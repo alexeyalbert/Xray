@@ -17,55 +17,74 @@ extension AppModel {
             var topicCounts = try await sqliteManager.getTopicAnnotationCounts()
             let total = topicCounts.total
             var annotatedCount = topicCounts.annotated
+            var completedCount = topicCounts.completed
             let initialMissingCount = topicCounts.missing
 
             await MainActor.run {
-                let progress = total == 0 ? 1.0 : Double(annotatedCount) / Double(max(total, 1))
+                let progress = total == 0 ? 1.0 : Double(completedCount) / Double(max(total, 1))
                 importState.isDatabaseImporting = true
                 importState.databaseImportProgress = progress
                 importState.databaseImportStatus = initialMissingCount == 0
-                    ? "All topics are already annotated."
-                    : "Resuming topic annotation. \(annotatedCount) of \(total) already annotated."
+                    ? "All topic processing is already resolved."
+                    : "Resuming topic annotation. \(completedCount) of \(total) already resolved."
                 importState.databaseImportError = nil
                 importState.databaseImportCompleted = false
                 importState.isTopicAnnotating = true
                 importState.topicProgress = progress
-                importState.topicStatus = "\(annotatedCount) of \(total) posts complete. \(initialMissingCount) remaining."
+                importState.topicStatus = "\(completedCount) of \(total) posts complete. \(initialMissingCount) remaining."
                 importState.topicError = nil
                 importState.topicCompleted = false
             }
 
-            let pageSize = 1000
+            // Persist after every configured app-side batch so completed work
+            // survives long-running jobs regardless of provider.
+            let pageSize = OpenAIManager.topicPersistencePageSize(
+                for: OpenAIManager.currentProvider,
+                concurrentRequests: OpenAIManager.topicConcurrentRequests
+            )
             let maxAnnotationPasses = 4
             var updatedThisRun = 0
             var annotationPass = 0
             var consecutivePassesWithoutProgress = 0
+            var persistentSkipCandidateAttempts: [Int: Int] = [:]
 
             while annotationPass < maxAnnotationPasses {
                 annotationPass += 1
-                let annotatedAtPassStart = annotatedCount
+                let completedAtPassStart = completedCount
                 var beforeCreatedAt: Date? = nil
                 var beforeId: Int? = nil
 
                 while true {
-                    let page = try await sqliteManager.fetchPosts(limit: pageSize, beforeCreatedAt: beforeCreatedAt, beforeId: beforeId)
+                    let page = try await sqliteManager.fetchPostsMissingTopics(
+                        limit: pageSize,
+                        beforeCreatedAt: beforeCreatedAt,
+                        beforeId: beforeId
+                    )
                     if page.isEmpty { break }
 
-                    // Only annotate posts missing topics
-                    let toAnnotate = page.filter { $0.primary_topic.isEmpty }
+                    let toAnnotate = page
                     if !toAnnotate.isEmpty {
-                        let annotated = await TopicAnnotator.annotatePostsWithTopics(toAnnotate) { [self] current, totalInPage in
-                            Task { @MainActor in
-                                // Reflect per-page progress into overall persisted-topic progress.
-                                let pageFraction = Double(current) / Double(max(totalInPage, 1))
-                                let already = Double(annotatedCount) / Double(max(total, 1))
-                                let progress = min(1.0, already + pageFraction * (Double(toAnnotate.count) / Double(max(total, 1))))
-                                importState.topicProgress = progress
-                                importState.databaseImportProgress = progress
+                        let batchResult = await TopicAnnotator.annotatePostsWithTopics(
+                            toAnnotate,
+                            onProgress: { [self] current, totalInPage in
+                                Task { @MainActor in
+                                    // Reflect per-page progress into overall persisted-topic progress.
+                                    let pageFraction = Double(current) / Double(max(totalInPage, 1))
+                                    let already = Double(completedCount) / Double(max(total, 1))
+                                    let progress = min(1.0, already + pageFraction * (Double(toAnnotate.count) / Double(max(total, 1))))
+                                    importState.topicProgress = progress
+                                    importState.databaseImportProgress = progress
+                                }
                             }
+                        )
+                        if let configurationError = batchResult.configurationError {
+                            throw TopicAnnotationConfigurationError(message: configurationError)
+                        }
+                        for postID in batchResult.persistentSkipCandidatePostIDs {
+                            persistentSkipCandidateAttempts[postID, default: 0] += 1
                         }
 
-                        let successfullyAnnotated = annotated.filter {
+                        let successfullyAnnotated = batchResult.posts.filter {
                             !$0.primary_topic.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                         }
                         let topicUpdates = successfullyAnnotated.map {
@@ -80,6 +99,7 @@ extension AppModel {
                         let previousAnnotatedCount = annotatedCount
                         topicCounts = try await sqliteManager.getTopicAnnotationCounts()
                         annotatedCount = topicCounts.annotated
+                        completedCount = topicCounts.completed
                         updatedThisRun += max(0, annotatedCount - previousAnnotatedCount)
 
                         // Update in-memory posts, if loaded in UI
@@ -92,10 +112,10 @@ extension AppModel {
                         }
 
                         await MainActor.run {
-                            let progress = min(1.0, total == 0 ? 1.0 : Double(annotatedCount) / Double(max(total, 1)))
+                            let progress = min(1.0, total == 0 ? 1.0 : Double(completedCount) / Double(max(total, 1)))
                             importState.topicProgress = progress
                             importState.databaseImportProgress = progress
-                            importState.topicStatus = "\(annotatedCount) of \(total) posts complete. \(max(0, total - annotatedCount)) remaining."
+                            importState.topicStatus = "\(completedCount) of \(total) posts complete. \(topicCounts.missing) remaining."
                         }
                     }
 
@@ -111,11 +131,22 @@ extension AppModel {
                     if page.count < pageSize { break }
                 }
 
+                let terminalPostIDs = Set(persistentSkipCandidateAttempts.compactMap { postID, attempts in
+                    attempts >= 2 ? postID : nil
+                })
+                if !terminalPostIDs.isEmpty {
+                    try await sqliteManager.markTopicAnnotationUnavailable(postIDs: terminalPostIDs)
+                    for postID in terminalPostIDs {
+                        persistentSkipCandidateAttempts.removeValue(forKey: postID)
+                    }
+                }
+
                 topicCounts = try await sqliteManager.getTopicAnnotationCounts()
                 annotatedCount = topicCounts.annotated
+                completedCount = topicCounts.completed
                 guard topicCounts.missing > 0 else { break }
 
-                if annotatedCount == annotatedAtPassStart {
+                if completedCount == completedAtPassStart {
                     consecutivePassesWithoutProgress += 1
                 } else {
                     consecutivePassesWithoutProgress = 0
@@ -130,10 +161,14 @@ extension AppModel {
             }
 
             let finalCounts = try await sqliteManager.getTopicAnnotationCounts()
-            let finalProgress = finalCounts.total == 0 ? 1.0 : Double(finalCounts.annotated) / Double(max(finalCounts.total, 1))
-            let finalStatus = finalCounts.missing == 0
-                ? "Annotated topics for \(finalCounts.annotated) of \(finalCounts.total) posts."
-                : "Annotated topics for \(finalCounts.annotated) of \(finalCounts.total) posts. \(finalCounts.missing) still missing topics."
+            let finalProgress = finalCounts.total == 0 ? 1.0 : Double(finalCounts.completed) / Double(max(finalCounts.total, 1))
+            var finalStatus = "Annotated topics for \(finalCounts.annotated) of \(finalCounts.total) posts."
+            if finalCounts.unavailable > 0 {
+                finalStatus += " Skipped \(finalCounts.unavailable) posts with persistent provider errors."
+            }
+            if finalCounts.missing > 0 {
+                finalStatus += " \(finalCounts.missing) still missing topics."
+            }
 
             await MainActor.run {
                 importState.isDatabaseImporting = false
@@ -160,7 +195,7 @@ extension AppModel {
         do {
             try await sqliteManager.connect()
             let hasPendingTopics: Bool
-            if OpenAIManager.currentAPIKey() != nil {
+            if OpenAIManager.isTopicGenerationConfigured {
                 hasPendingTopics = try await sqliteManager.getTopicAnnotationCounts().missing > 0
             } else {
                 hasPendingTopics = false
@@ -181,13 +216,21 @@ extension AppModel {
         guard !importState.isDatabaseImporting, !importState.isEnrichmentQueueRunning else { return }
         await MainActor.run { importState.isEnrichmentQueueRunning = true }
 
-        if OpenAIManager.currentAPIKey() != nil {
+        if OpenAIManager.isTopicGenerationConfigured {
             await processMissingTopics()
         }
         await processAllPostsEmbeddings()
         await processAllPostsImageEmbeddings()
 
-        await MainActor.run { importState.isEnrichmentQueueRunning = false }
+        // Reload the current feed window, then recreate its complete view hierarchy once the
+        // enrichment queue finishes so every visible card reads the newly persisted topics.
+        let loadedPostCount = await MainActor.run { importState.posts?.count ?? 0 }
+        await refreshVisiblePostsFromDatabase(pageSize: max(100, loadedPostCount))
+
+        await MainActor.run {
+            importState.windowContentRevision &+= 1
+            importState.isEnrichmentQueueRunning = false
+        }
         await refreshPendingEnrichmentWork()
     }
 }
