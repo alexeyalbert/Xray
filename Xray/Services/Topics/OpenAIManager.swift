@@ -24,6 +24,7 @@ enum AIProvider: String, CaseIterable {
 
 enum OpenAIManager {
     static let providerKey = "ai_provider"
+    static let openRouterZDREnabledKey = "topic_openrouter_zdr_enabled"
     static let compatibleBaseURLKey = "topic_openai_compatible_base_url"
     static let compatibleModelKey = "topic_openai_compatible_model"
     private static let openRouterConcurrentRequestsKey = "topic_openrouter_concurrent_requests"
@@ -37,6 +38,15 @@ enum OpenAIManager {
     static let topicConcurrentRequestsRange = 1...128
 
     private static let openRouterAppName = "Xray"
+
+    static var openRouterZDREnabled: Bool {
+        get {
+            UserDefaults.standard.object(forKey: openRouterZDREnabledKey) as? Bool ?? true
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: openRouterZDREnabledKey)
+        }
+    }
 
     static var currentProvider: AIProvider {
         get {

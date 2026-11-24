@@ -55,6 +55,7 @@ struct AISettingsPane: View {
 }
 
 private struct TopicGenerationProviderSettings: View {
+    @AppStorage(OpenAIManager.openRouterZDREnabledKey) private var openRouterZDREnabled = true
     @Binding var selectedProvider: AIProvider
     @Binding var openRouterAPIKey: String
     let openRouterSavedFeedback: String
@@ -112,6 +113,28 @@ private struct TopicGenerationProviderSettings: View {
                 concurrentRequests: $concurrentRequests,
                 onSaveSettings: onSaveSettings
             )
+
+            if selectedProvider == .openrouter {
+                Divider()
+                    .padding(.vertical, 10)
+
+                Toggle(isOn: $openRouterZDREnabled) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Request Zero Data Retention (ZDR)")
+                            .font(.subheadline.weight(.medium))
+
+                        Text("Prevents routing to providers that retain prompts for safety or training. Your OpenRouter account privacy settings still apply.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .toggleStyle(.switch)
+                .controlSize(.mini)
+                .padding(.vertical, 8)
+                .pointingHandOnHover()
+
+                TopicRunZDRWarningView()
+            }
         }
     }
 }

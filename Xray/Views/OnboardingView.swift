@@ -137,7 +137,7 @@ private struct IntroStep: View {
                         )
                         IntroFeatureRow(
                             systemImage: "eye.slash",
-                            text: "**Free** and entirely **on-device** if you choose to opt out of topic tagging via direct (not proxied) ZDR OpenRouter API calls."
+                            text: "**Free** and entirely **on-device** if you choose to opt out of topic tagging via direct OpenRouter API calls, which request ZDR by default."
                         )
                     }
 
@@ -634,7 +634,7 @@ private struct OpenRouterSetupStep: View {
     var body: some View {
         OnboardingStepLayout(
             title: "Set up topic generation",
-            description: "OpenRouter is optional. When enabled, Xray uses it to generate topics for posts. Your key is stored in the macOS Keychain, and all calls are made directly to OpenRouter, with Zero Data Retention enabled for every API call.\nA archive of ~32,000 posts costs about $2.80 USD to tag with topics.",
+            description: "OpenRouter is optional. When enabled, Xray uses it to generate topics for posts. Your key is stored in the macOS Keychain, and all calls are made directly to OpenRouter. Xray requests Zero Data Retention by default; you can turn this off in Settings. Your OpenRouter account privacy settings still apply.\nA archive of ~32,000 posts costs about $2.80 USD to tag with topics.",
             onBack: onBack,
             onContinue: saveAndContinue,
             onSkipAll: onSkipAll,

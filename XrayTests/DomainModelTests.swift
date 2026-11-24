@@ -4,6 +4,37 @@ import Testing
 
 @Suite("Domain model compatibility")
 struct DomainModelTests {
+    @Test("OpenRouter ZDR defaults on and can be disabled without changing provider sorting")
+    func openRouterZDRRequestPreference() throws {
+        let key = OpenAIManager.openRouterZDREnabledKey
+        let defaults = UserDefaults.standard
+        let previousValue = defaults.object(forKey: key)
+        defer {
+            if let previousValue {
+                defaults.set(previousValue, forKey: key)
+            } else {
+                defaults.removeObject(forKey: key)
+            }
+        }
+
+        defaults.removeObject(forKey: key)
+        #expect(OpenAIManager.openRouterZDREnabled)
+
+        for enabled in [true, false, true] {
+            OpenAIManager.openRouterZDREnabled = enabled
+            #expect(defaults.bool(forKey: key) == enabled)
+            let preferences = TopicAnnotator.OpenRouterProviderPreferences()
+            let data = try JSONEncoder().encode(preferences)
+            let json = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+            #expect(json["sort"] as? String == "throughput")
+            if enabled {
+                #expect(json["zdr"] as? Bool == true)
+            } else {
+                #expect(json["zdr"] == nil)
+            }
+        }
+    }
+
     @Test("Post round trips link metadata without shifting fields")
     func postRoundTripPreservesLinks() throws {
         let destination = try #require(URL(string: "https://example.com/article"))

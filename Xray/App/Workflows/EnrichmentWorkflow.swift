@@ -20,6 +20,17 @@ extension AppModel {
             var completedCount = topicCounts.completed
             let initialMissingCount = topicCounts.missing
 
+            // One diagnostic run spans every page and retry pass. A no-op leaves
+            // the previous run's persisted result intact.
+            if initialMissingCount > 0 {
+                TopicRequestDiagnostics.shared.beginTopicRun()
+            }
+            defer {
+                if initialMissingCount > 0 {
+                    TopicRequestDiagnostics.shared.endTopicRun()
+                }
+            }
+
             await MainActor.run {
                 let progress = total == 0 ? 1.0 : Double(completedCount) / Double(max(total, 1))
                 importState.isDatabaseImporting = true
