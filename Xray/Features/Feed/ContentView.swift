@@ -249,6 +249,7 @@ struct ContentView: View {
                     onResetStoredTopics: onResetStoredTopics
                 )
                     .frame(width: SettingsView.modalSize.width, height: SettingsView.modalSize.height)
+                    .modifier(TopicZDRFailureAlertModifier())
             }
             .onChange(of: isShowingSettings) { _, isShowing in
                 if !isShowing {

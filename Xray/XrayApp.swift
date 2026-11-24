@@ -58,6 +58,7 @@ struct XrayApp: App {
                     MainWindowTint()
                 }
                 .containerBackground(.regularMaterial, for: .window)
+                .modifier(TopicZDRFailureAlertModifier(isHostActive: !isShowingSettings))
             }
         }
         .windowResizability(isShowingOnboarding ? .contentSize : .automatic)

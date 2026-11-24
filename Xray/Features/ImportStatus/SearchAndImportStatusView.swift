@@ -35,6 +35,10 @@ struct SearchAndImportStatusView: View {
                     }
                     .font(.subheadline.weight(.semibold))
                 }
+
+                Divider()
+
+                TopicRequestDiagnosticsView()
             }
             .padding(16)
         }
@@ -177,5 +181,4 @@ struct SearchAndImportStatusView: View {
         return String(format: "%.2f s", duration)
     }
 }
-
 

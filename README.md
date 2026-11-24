@@ -92,7 +92,9 @@ the feed keeps bookmark order available as a separate result mode.
 Topic generation is independent of embeddings. When enabled, Xray sends the
 post text and a limited set of available public media to the selected API and
 saves the returned topics in the local database. OpenRouter requests ask for
-Zero Data Retention routing.
+Zero Data Retention routing by default; you can disable this request preference
+in the Topic Generation Provider settings. OpenRouter account privacy settings
+still apply.
 
 ## Privacy
 
@@ -105,7 +107,8 @@ Zero Data Retention routing.
   imported bookmark data when Xray needs to display or process them.
 - Topic generation is optional. If enabled, post text and selected public
   media are sent directly to OpenRouter. Requests include a Zero Data Retention
-  routing preference, but the provider's own terms and policies still apply.
+  routing preference by default. Turning it off may allow providers that retain
+  prompts for safety or training, subject to your OpenRouter account settings.
 - API keys and the browser-import session token are stored in the macOS
   Keychain. Ordinary preferences are stored in `UserDefaults`.
 - Browser streaming is local to your Mac and token-protected. JSON export mode

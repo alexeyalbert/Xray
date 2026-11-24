@@ -101,9 +101,13 @@ enum TopicAnnotator {
         let content: MessageContent
     }
 
-    private struct OpenRouterProviderPreferences: Encodable {
-        let sort: String
-        let zdr: Bool
+    struct OpenRouterProviderPreferences: Encodable {
+        let sort = "throughput"
+        let zdr: Bool?
+
+        init() {
+            zdr = OpenAIManager.openRouterZDREnabled ? true : nil
+        }
     }
 
     private struct ResponseFormat: Encodable {
@@ -161,6 +165,13 @@ enum TopicAnnotator {
                 persistentSkipCandidatePostIDs: [],
                 configurationError: "The topic annotation provider is not fully configured."
             )
+        }
+
+        let diagnostics = TopicRequestDiagnostics.shared
+        let ownsDiagnosticsRun = !diagnostics.isTopicRunActive
+        if ownsDiagnosticsRun { diagnostics.beginTopicRun() }
+        defer {
+            if ownsDiagnosticsRun { diagnostics.endTopicRun() }
         }
 
         let concurrentRequests = OpenAIManager.topicConcurrentRequests
@@ -239,6 +250,9 @@ enum TopicAnnotator {
 
                 for await (i, updated, persistentSkipCandidate) in group {
                     results[i] = updated
+                    if !updated.primary_topic.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        diagnostics.recordTopicSuccess(postID: updated.id)
+                    }
                     if persistentSkipCandidate {
                         persistentSkipCandidatePostIDs.insert(updated.id)
                     }
@@ -301,7 +315,7 @@ enum TopicAnnotator {
             temperature: topicTemperature,
             topP: topicTopP,
             responseFormat: isOpenRouter ? ResponseFormat(type: "json_object") : nil,
-            provider: isOpenRouter ? OpenRouterProviderPreferences(sort: "throughput", zdr: true) : nil,
+            provider: isOpenRouter ? OpenRouterProviderPreferences() : nil,
             generationConfig: isOpenRouter ? GenerationConfig(mediaResolution: "MEDIA_RESOLUTION_LOW") : nil
         )
 
@@ -324,6 +338,8 @@ enum TopicAnnotator {
                     logRemoteResponseFailure(
                         "Received a non-HTTP response",
                         provider: providerLabel,
+                        model: body.model,
+                        requestedZDR: body.provider.map { $0.zdr == true },
                         postID: post.id,
                         attempt: attempt,
                         response: response,
@@ -336,6 +352,8 @@ enum TopicAnnotator {
                     logRemoteResponseFailure(
                         "Received a retryable HTTP error",
                         provider: providerLabel,
+                        model: body.model,
+                        requestedZDR: body.provider.map { $0.zdr == true },
                         postID: post.id,
                         attempt: attempt,
                         response: http,
@@ -355,6 +373,8 @@ enum TopicAnnotator {
                     logRemoteResponseFailure(
                         "Received a non-success HTTP response",
                         provider: providerLabel,
+                        model: body.model,
+                        requestedZDR: body.provider.map { $0.zdr == true },
                         postID: post.id,
                         attempt: attempt,
                         response: http,
@@ -373,6 +393,8 @@ enum TopicAnnotator {
                     logRemoteResponseFailure(
                         "Provider returned an error envelope (code: \(codeDescription))",
                         provider: providerLabel,
+                        model: body.model,
+                        requestedZDR: body.provider.map { $0.zdr == true },
                         postID: post.id,
                         attempt: attempt,
                         response: http,
@@ -400,6 +422,8 @@ enum TopicAnnotator {
                     logRemoteResponseFailure(
                         "Failed to decode response envelope",
                         provider: providerLabel,
+                        model: body.model,
+                        requestedZDR: body.provider.map { $0.zdr == true },
                         postID: post.id,
                         attempt: attempt,
                         response: http,
@@ -413,6 +437,8 @@ enum TopicAnnotator {
                     logRemoteResponseFailure(
                         "Failed to parse topics from response content",
                         provider: providerLabel,
+                        model: body.model,
+                        requestedZDR: body.provider.map { $0.zdr == true },
                         postID: post.id,
                         attempt: attempt,
                         response: http,
@@ -425,6 +451,15 @@ enum TopicAnnotator {
                 if Task.isCancelled {
                     return .retryableFailure
                 }
+                TopicRequestDiagnostics.shared.record(
+                    provider: providerLabel, model: body.model, postID: post.id,
+                    attempt: attempt, statusCode: nil,
+                    requestedZDR: body.provider.map { $0.zdr == true },
+                    details: TopicRequestFailureDetails(
+                        message: String(error.localizedDescription.prefix(2_000)),
+                        code: nil, kind: .transport
+                    )
+                )
                 if attempt >= maxAttempts {
                     logger.error("[\(providerLabel, privacy: .public)] request failed for post id=\(post.id) after retries: \(String(describing: error), privacy: .public)")
                     return .retryableFailure
@@ -440,23 +475,8 @@ enum TopicAnnotator {
     }
 
     private static func providerError(from data: Data) -> (message: String, code: Int?)? {
-        guard
-            let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
-            let error = object["error"] as? [String: Any]
-        else {
-            return nil
-        }
-
-        let message = error["message"] as? String ?? String(describing: error)
-        let code: Int?
-        if let number = error["code"] as? NSNumber {
-            code = number.intValue
-        } else if let string = error["code"] as? String {
-            code = Int(string)
-        } else {
-            code = nil
-        }
-        return (message, code)
+        guard let details = TopicRequestFailureDetails.parse(data) else { return nil }
+        return (details.message, details.code)
     }
 
     private static func isRetryableHTTPStatus(_ statusCode: Int) -> Bool {
@@ -480,11 +500,22 @@ enum TopicAnnotator {
     private static func logRemoteResponseFailure(
         _ reason: String,
         provider: String,
+        model: String,
+        requestedZDR: Bool?,
         postID: Int,
         attempt: Int,
         response: URLResponse,
         data: Data
     ) {
+        let statusCode = (response as? HTTPURLResponse)?.statusCode
+        TopicRequestDiagnostics.shared.record(
+            provider: provider, model: model, postID: postID, attempt: attempt,
+            statusCode: statusCode, requestedZDR: requestedZDR,
+            details: TopicRequestFailureDetails.parse(data) ?? TopicRequestFailureDetails(
+                message: reason, code: statusCode,
+                kind: statusCode.map { (200..<300).contains($0) } == false ? .providerError : .invalidResponse
+            )
+        )
         let status = (response as? HTTPURLResponse).map { String($0.statusCode) } ?? "non-HTTP"
         logger.error(
             "[\(provider, privacy: .public)] Topic request failed post=\(postID) attempt=\(attempt) status=\(status, privacy: .public) bytes=\(data.count) reason=\(reason, privacy: .public)"
